@@ -10,3 +10,6 @@
 # Beads runtime database artifacts must stay local-only.
 .beads/*.db
 .beads/*.db-*
+
+# Test coverage artifacts — generated, not source.
+/coverage/
