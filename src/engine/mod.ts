@@ -11,6 +11,8 @@ import { validateScreenReaderContent } from "../validate/screen_reader_content.t
 import { validateColorContrast } from "../validate/color_contrast.ts";
 import { validateReaderView } from "../validate/reader_view.ts";
 
+export { unfoldElement, unfoldNode, type UnfoldResult } from "./unfold.ts";
+
 export type Element = typeof globalThis extends { Element: infer E } ? E
   : unknown;
 

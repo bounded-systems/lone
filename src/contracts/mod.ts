@@ -10,3 +10,4 @@ export {
 } from "./finding.ts";
 export { SemanticNode, type SemanticNodeType } from "./semantic_node.ts";
 export { ValidatorSpec, type ValidatorSpecType } from "./validator_spec.ts";
+export { UnfoldedNode, type UnfoldedNodeType } from "./unfolded_node.ts";
