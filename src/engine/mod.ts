@@ -9,6 +9,7 @@ import { validateARIAUsage } from "../validate/aria_usage.ts";
 import { validateTextAlternatives } from "../validate/text_alternatives.ts";
 import { validateScreenReaderContent } from "../validate/screen_reader_content.ts";
 import { validateColorContrast } from "../validate/color_contrast.ts";
+import { validateReaderView } from "../validate/reader_view.ts";
 
 export type Element = typeof globalThis extends { Element: infer E } ? E
   : unknown;
@@ -54,6 +55,7 @@ export async function validate<T extends Element>(
   findings.push(...validateTextAlternatives(root));
   findings.push(...validateScreenReaderContent(root));
   findings.push(...validateColorContrast(root));
+  findings.push(...validateReaderView(root));
 
   return { findings: sortFindings(findings) };
 }
