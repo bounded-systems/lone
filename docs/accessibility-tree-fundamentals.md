@@ -353,7 +353,7 @@ effort:
   role="button"
   tabindex="0"
   onclick="playVideo()"
-  onkeydown="if(event.key==='Enter'||event.key===' ')playVideo()"
+  onkeydown='if (event.key === "Enter" || event.key === " ") playVideo()'
 >
   Play video
 </div>
