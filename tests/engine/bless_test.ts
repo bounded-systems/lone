@@ -1,4 +1,4 @@
-import { assertEquals } from "jsr:@std/assert";
+import { assertEquals } from "@std/assert";
 import { bless, type Element, validate } from "../../src/engine/mod.ts";
 import type { ElementLike } from "../../src/adapters/dom.ts";
 

@@ -1,5 +1,5 @@
-import { assert } from "jsr:@std/assert";
-import fc from "npm:fast-check@3";
+import { assert } from "@std/assert";
+import fc from "fast-check";
 import { ElementSpec } from "../../src/contracts/element_spec.ts";
 import { SemanticNode } from "../../src/contracts/semantic_node.ts";
 import { ValidatorSpec } from "../../src/contracts/validator_spec.ts";

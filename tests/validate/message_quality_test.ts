@@ -1,4 +1,4 @@
-import { assert } from "jsr:@std/assert";
+import { assert } from "@std/assert";
 import type { FindingType } from "../../src/contracts/finding.ts";
 import type { SemanticNodeType } from "../../src/contracts/semantic_node.ts";
 import { validateSemanticHTML } from "../../src/validate/semantic_html.ts";

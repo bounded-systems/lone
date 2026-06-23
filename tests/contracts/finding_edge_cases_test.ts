@@ -1,4 +1,4 @@
-import { assertEquals, assertThrows } from "jsr:@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { Finding } from "../../src/contracts/finding.ts";
 import { ZodError } from "zod";
 

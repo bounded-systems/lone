@@ -1,4 +1,4 @@
-import { assertEquals } from "jsr:@std/assert";
+import { assertEquals } from "@std/assert";
 import { AXNode, cdpToSemanticNode } from "../../src/adapters/cdp.ts";
 import type { AXNodeType } from "../../src/adapters/cdp.ts";
 

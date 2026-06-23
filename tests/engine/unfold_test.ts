@@ -1,4 +1,4 @@
-import { assertEquals } from "jsr:@std/assert";
+import { assertEquals } from "@std/assert";
 import { unfoldNode } from "../../src/engine/unfold.ts";
 import type { SemanticNodeType } from "../../src/contracts/semantic_node.ts";
 
@@ -12,7 +12,9 @@ function node(
 }
 
 Deno.test("unfoldNode - heading h1 extracts at level 1", () => {
-  const { nodes } = unfoldNode(node("div", undefined, [node("h1", "The model")]));
+  const { nodes } = unfoldNode(
+    node("div", undefined, [node("h1", "The model")]),
+  );
   assertEquals(nodes, [{ kind: "heading", level: 1, text: "The model" }]);
 });
 
@@ -28,7 +30,11 @@ Deno.test("unfoldNode - paragraph extracted from p", () => {
 
 Deno.test("unfoldNode - pre extracted as preFormatted code", () => {
   const { nodes } = unfoldNode(node("pre", "const x = 1;"));
-  assertEquals(nodes, [{ kind: "code", text: "const x = 1;", preFormatted: true }]);
+  assertEquals(nodes, [{
+    kind: "code",
+    text: "const x = 1;",
+    preFormatted: true,
+  }]);
 });
 
 Deno.test("unfoldNode - code extracted as not-preFormatted", () => {
@@ -45,14 +51,22 @@ Deno.test("unfoldNode - ul extracts ordered=false list", () => {
   const { nodes } = unfoldNode(
     node("ul", undefined, [node("li", "alpha"), node("li", "beta")]),
   );
-  assertEquals(nodes, [{ kind: "list", ordered: false, items: ["alpha", "beta"] }]);
+  assertEquals(nodes, [{
+    kind: "list",
+    ordered: false,
+    items: ["alpha", "beta"],
+  }]);
 });
 
 Deno.test("unfoldNode - ol extracts ordered=true list", () => {
   const { nodes } = unfoldNode(
     node("ol", undefined, [node("li", "first"), node("li", "second")]),
   );
-  assertEquals(nodes, [{ kind: "list", ordered: true, items: ["first", "second"] }]);
+  assertEquals(nodes, [{
+    kind: "list",
+    ordered: true,
+    items: ["first", "second"],
+  }]);
 });
 
 Deno.test("unfoldNode - aria-hidden subtree is skipped", () => {
@@ -81,11 +95,16 @@ Deno.test("unfoldNode - div.code produces LONE_READER_CODE_NOT_PRE finding", () 
   const { findings } = unfoldNode(
     node("div", "const x = 1;", [], { class: "code" }),
   );
-  assertEquals(findings.some((f) => f.code === "LONE_READER_CODE_NOT_PRE"), true);
+  assertEquals(
+    findings.some((f) => f.code === "LONE_READER_CODE_NOT_PRE"),
+    true,
+  );
 });
 
 Deno.test("unfoldNode - pre.code produces no reader findings", () => {
-  const { findings } = unfoldNode(node("pre", "const x = 1;", [], { class: "code" }));
+  const { findings } = unfoldNode(
+    node("pre", "const x = 1;", [], { class: "code" }),
+  );
   assertEquals(
     findings.some((f) => f.code === "LONE_READER_CODE_NOT_PRE"),
     false,

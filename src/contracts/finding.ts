@@ -7,13 +7,24 @@ const errorCodeRegex = /^LONE_[A-Z0-9]+(?:_[A-Z0-9]+)+$/;
 const jsonPathRegex =
   /^\$(?:\[(?:\d+|'[^']*'|"[^"]*")\]|\.(?:[a-zA-Z_][a-zA-Z0-9_]*|\[(?:\d+|'[^']*'|"[^"]*")\]))*$/;
 
-export const Severity = z.enum(["error", "warning", "info"]);
-export type SeverityType = z.infer<typeof Severity>;
+export type SeverityType = "error" | "warning" | "info";
+export const Severity: z.ZodEnum<["error", "warning", "info"]> = z.enum([
+  "error",
+  "warning",
+  "info",
+]);
 
 const severityOrder: Record<SeverityType, number> = {
   error: 0,
   warning: 1,
   info: 2,
+};
+
+export type FindingType = {
+  code: string;
+  path: string;
+  message: string;
+  severity: SeverityType;
 };
 
 export const Finding = z.object({
@@ -34,8 +45,6 @@ export const Finding = z.object({
     .trim(),
   severity: Severity.default("error"),
 });
-
-export type FindingType = z.infer<typeof Finding>;
 
 export function compareFindings(a: FindingType, b: FindingType): number {
   const severityCmp = severityOrder[a.severity] - severityOrder[b.severity];

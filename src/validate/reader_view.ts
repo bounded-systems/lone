@@ -57,8 +57,7 @@ function checkNode(node: SemanticNodeType, path: string): FindingType[] {
       findings.push({
         code: "LONE_READER_DECORATIVE_IMG_NOT_HIDDEN",
         path,
-        message:
-          'Decorative image (alt="") is missing aria-hidden="true". ' +
+        message: 'Decorative image (alt="") is missing aria-hidden="true". ' +
           "Reader view may still render it as a broken image slot.",
         severity: "info",
       });

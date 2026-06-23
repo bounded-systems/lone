@@ -1,4 +1,4 @@
-import { assertEquals } from "jsr:@std/assert";
+import { assertEquals } from "@std/assert";
 import { parseHTML } from "linkedom";
 import { type Element, validate } from "../../src/engine/mod.ts";
 

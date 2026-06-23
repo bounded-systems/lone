@@ -1,4 +1,4 @@
-import { assertEquals, assertThrows } from "jsr:@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { SemanticNode } from "../../src/contracts/semantic_node.ts";
 import { ZodError } from "zod";
 

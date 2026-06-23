@@ -7,6 +7,11 @@ const kebabCaseRegex = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 const semverRegex =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
 
+export type ValidatorSpecType = {
+  id: string;
+  version: string;
+};
+
 export const ValidatorSpec = z.object({
   id: z.string()
     .min(1)
@@ -18,5 +23,3 @@ export const ValidatorSpec = z.object({
       "Version must follow semantic versioning (e.g., 1.0.0)",
     ),
 });
-
-export type ValidatorSpecType = z.infer<typeof ValidatorSpec>;

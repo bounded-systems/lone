@@ -1,17 +1,19 @@
 {
-  "name": "semantic-page-elements",
-  "version": "0.0.1",
+  "name": "@bounded-systems/lone",
+  "version": "0.1.0",
+  "license": "MIT",
   "exports": "./src/mod.ts",
   "imports": {
     "zod": "npm:zod@3",
-    "linkedom": "npm:linkedom@0.15.3"
+    "linkedom": "npm:linkedom@0.15.3",
+    "@std/assert": "jsr:@std/assert@^1",
+    "fast-check": "npm:fast-check@3"
   },
   "lint": {
     "rules": {
-      // JSR-publishability rules, auto-applied because this package declares
-      // name/version/exports. Not published to JSR yet — re-enable and fix
-      // (versioned import-map deps, explicit public-API types) before publishing.
-      "exclude": ["no-slow-types", "no-import-prefix", "no-unversioned-import"]
+      // no-slow-types requires rewriting z.infer<> chains throughout the Zod schemas.
+      // Excluded for v0.1.0; publish with --allow-slow-types until this is addressed.
+      "exclude": ["no-slow-types"]
     }
   },
   "tasks": {

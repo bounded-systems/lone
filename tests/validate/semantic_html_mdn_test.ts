@@ -1,4 +1,4 @@
-import { assertEquals } from "jsr:@std/assert";
+import { assertEquals } from "@std/assert";
 import { validateSemanticHTML } from "../../src/validate/semantic_html.ts";
 import type { SemanticNodeType } from "../../src/contracts/semantic_node.ts";
 import { goodSemanticsSemanticNode } from "../../examples/mdn-good-semantics/good_semantics.ts";

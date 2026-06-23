@@ -7,9 +7,11 @@ import type { SemanticNodeType } from "../contracts/semantic_node.ts";
  */
 
 // AXNodeId - Unique accessibility node identifier (string)
+// deno-lint-ignore no-slow-types
 const AXNodeId = z.string();
 
 // AXValueType enum
+// deno-lint-ignore no-slow-types
 const AXValueType = z.enum([
   "boolean",
   "tristate",
@@ -31,6 +33,7 @@ const AXValueType = z.enum([
 ]);
 
 // AXValueSourceType enum
+// deno-lint-ignore no-slow-types
 const AXValueSourceType = z.enum([
   "attribute",
   "implicit",
@@ -41,6 +44,7 @@ const AXValueSourceType = z.enum([
 ]);
 
 // AXValueNativeSourceType enum
+// deno-lint-ignore no-slow-types
 const AXValueNativeSourceType = z.enum([
   "description",
   "figcaption",
@@ -55,6 +59,7 @@ const AXValueNativeSourceType = z.enum([
 ]);
 
 // AXRelatedNode
+// deno-lint-ignore no-slow-types
 const AXRelatedNode = z.object({
   backendDOMNodeId: z.number().optional(),
   idref: z.string().optional(),
@@ -107,16 +112,34 @@ const AXValue: z.ZodType<AXValueDataType> = z.lazy(() =>
 );
 
 // AXPropertyName - String enum for accessibility properties
+// deno-lint-ignore no-slow-types
 const AXPropertyName = z.string();
 
 // AXProperty - Name/value pair
+// deno-lint-ignore no-slow-types
 const AXProperty = z.object({
   name: AXPropertyName,
   value: AXValue,
 });
 
 // AXNode - A node in the accessibility tree
-export const AXNode = z.object({
+export type AXNodeType = {
+  nodeId: string;
+  ignored: boolean;
+  ignoredReasons?: { name: string; value: AXValueDataType }[];
+  role?: AXValueDataType;
+  chromeRole?: AXValueDataType;
+  name?: AXValueDataType;
+  description?: AXValueDataType;
+  value?: AXValueDataType;
+  properties?: { name: string; value: AXValueDataType }[];
+  parentId?: string;
+  childIds?: string[];
+  backendDOMNodeId?: number;
+  frameId?: string;
+};
+
+export const AXNode: z.ZodType<AXNodeType> = z.object({
   nodeId: AXNodeId,
   ignored: z.boolean(),
   ignoredReasons: z.array(AXProperty).optional(),
@@ -131,8 +154,6 @@ export const AXNode = z.object({
   backendDOMNodeId: z.number().optional(),
   frameId: z.string().optional(),
 });
-
-export type AXNodeType = z.infer<typeof AXNode>;
 
 /**
  * Convert CDP AXNode array to SemanticNode tree
@@ -156,21 +177,12 @@ export function cdpToSemanticNode(
   // Find root node (node without parentId or first node)
   const rootNode = nodes.find((node) => !node.parentId) || nodes[0];
 
-  /**
-   * Recursively convert AXNode to SemanticNode
-   */
   function convertNode(axNode: AXNodeType): SemanticNodeType {
-    // Extract role from AXValue
     const role = axNode.role?.value ? String(axNode.role.value) : undefined;
-
-    // Extract name from AXValue
     const name = axNode.name?.value ? String(axNode.name.value) : undefined;
-
-    // Build type from role or chrome role
     const type = role ||
       (axNode.chromeRole?.value ? String(axNode.chromeRole.value) : "unknown");
 
-    // Convert child nodes
     const children: SemanticNodeType[] = [];
     if (axNode.childIds) {
       for (const childId of axNode.childIds) {
@@ -181,39 +193,22 @@ export function cdpToSemanticNode(
       }
     }
 
-    // Build properties object with all extra data
     const props: Record<string, unknown> = {};
-
     if (axNode.description?.value !== undefined) {
       props.description = axNode.description.value;
     }
-
-    if (axNode.value?.value !== undefined) {
-      props.value = axNode.value.value;
-    }
-
+    if (axNode.value?.value !== undefined) props.value = axNode.value.value;
     if (axNode.backendDOMNodeId !== undefined) {
       props.backendDOMNodeId = axNode.backendDOMNodeId;
     }
-
-    if (axNode.ignored) {
-      props.ignored = true;
-    }
-
-    // Add custom properties
+    if (axNode.ignored) props.ignored = true;
     if (axNode.properties) {
       for (const prop of axNode.properties) {
         props[prop.name] = prop.value.value;
       }
     }
 
-    return {
-      type,
-      name,
-      role,
-      props,
-      children,
-    };
+    return { type, name, role, props, children };
   }
 
   return convertNode(rootNode);

@@ -1,4 +1,4 @@
-import { assertEquals } from "jsr:@std/assert";
+import { assertEquals } from "@std/assert";
 import { validateTextAlternatives } from "../../src/validate/text_alternatives.ts";
 import type { SemanticNodeType } from "../../src/contracts/semantic_node.ts";
 

@@ -1,4 +1,4 @@
-import { assertEquals, assertThrows } from "jsr:@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { ElementSpec } from "../../src/contracts/element_spec.ts";
 import { ZodError } from "zod";
 

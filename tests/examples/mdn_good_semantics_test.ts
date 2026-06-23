@@ -1,4 +1,4 @@
-import { assertEquals } from "jsr:@std/assert";
+import { assertEquals } from "@std/assert";
 import { ElementSpec } from "../../src/contracts/element_spec.ts";
 import { SemanticNode } from "../../src/contracts/semantic_node.ts";
 import { validateNameRequired } from "../../src/validate/nameable.ts";
