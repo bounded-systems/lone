@@ -3,8 +3,12 @@
     "type": "name",
     "value": "lone"
   },
+  "tagline": {
+    "type": "tagline",
+    "value": "Lone turns an untrusted DOM subtree into a Blessed<T> — a branded value you can render, cache, or publish with a type…"
+  },
   "description": {
     "type": "meta",
-    "value": "Lone turns an untrusted DOM subtree into a Blessed<T> — a branded"
+    "value": "Lone turns an untrusted DOM subtree into a Blessed<T> — a branded value you can render, cache, or publish with a type- and CI-level guarantee — or a deterministic Finding[] explaining why it can't be.  One boundary, two exits.  ts const result = await lone."
   }
 }
