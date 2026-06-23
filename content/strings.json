@@ -1,0 +1,10 @@
+{
+  "name": {
+    "type": "name",
+    "value": "lone"
+  },
+  "description": {
+    "type": "meta",
+    "value": "Lone turns an untrusted DOM subtree into a Blessed<T> — a branded"
+  }
+}
