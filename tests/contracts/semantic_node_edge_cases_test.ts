@@ -109,7 +109,7 @@ Deno.test("SemanticNode - rejects excessively long name", () => {
 
 // Edge case: deeply nested structures
 Deno.test("SemanticNode - handles deep nesting", () => {
-  let node: any = { type: "innermost" };
+  let node: Record<string, unknown> = { type: "innermost" };
 
   // Create 10 levels of nesting
   for (let i = 0; i < 10; i++) {

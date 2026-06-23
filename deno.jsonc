@@ -6,6 +6,14 @@
     "zod": "npm:zod@3",
     "linkedom": "npm:linkedom@0.15.3"
   },
+  "lint": {
+    "rules": {
+      // JSR-publishability rules, auto-applied because this package declares
+      // name/version/exports. Not published to JSR yet — re-enable and fix
+      // (versioned import-map deps, explicit public-API types) before publishing.
+      "exclude": ["no-slow-types", "no-import-prefix", "no-unversioned-import"]
+    }
+  },
   "tasks": {
     "test": "deno test -A --fail-fast tests",
     "test:watch": "deno test -A --watch tests",

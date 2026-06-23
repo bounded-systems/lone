@@ -1,17 +1,15 @@
 name: ci
-# Typecheck gate (does it compile). Full `deno task ci` (fmt/lint/test) is deferred
-# until a lone-hygiene pass — `deno fmt --check` currently flags pre-existing drift
-# in test fixtures + docs, which shouldn't be auto-reformatted blind.
+# Full gate: deno fmt --check + lint + typecheck + tests.
 on:
   push: { branches: [main] }
   pull_request:
   workflow_dispatch:
 jobs:
-  check:
+  ci:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2.0.4
         with:
           deno-version: v2.x
-      - run: deno task check
+      - run: deno task ci

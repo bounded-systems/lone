@@ -201,7 +201,7 @@ Deno.test("ElementSpec - rejects excessively long attribute value", () => {
 
 // Edge case: deeply nested structures
 Deno.test("ElementSpec - handles deep nesting", () => {
-  let node: any = { tag: "span", text: "innermost" };
+  let node: Record<string, unknown> = { tag: "span", text: "innermost" };
 
   // Create 10 levels of nesting
   for (let i = 0; i < 10; i++) {

@@ -38,6 +38,7 @@ function blessValue<T extends Element>(subject: T): Blessed<T> {
   return subject as Blessed<T>;
 }
 
+// deno-lint-ignore require-await -- async public API, mirrors bless(); validators may become async
 export async function validate<T extends Element>(
   subject: T,
   _policy?: BlessPolicy,
