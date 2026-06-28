@@ -1,0 +1,47 @@
+CONFORMANCE.md
+  s_71a0aecf45d82c::t_13f48d1f354a26 220-222,228-229,233
+  s_71a0aecf45d82c::t_ef89c29a108a20 69
+  s_71a0aecf45d82c::t_3a7943d347d503 45,70,223-227,230-232
+tests/standard/web_build_test.ts
+  s_71a0aecf45d82c::t_62a0683901b489 65-68
+  s_71a0aecf45d82c::t_2e5af9e4600eed 72-75
+src/standard/conformance.ts
+  s_71a0aecf45d82c::t_1678599388a382 37-39
+  s_71a0aecf45d82c::t_63f95bed410f6c 346-348
+  s_71a0aecf45d82c::t_fd779e0372f824 184-191
+  s_71a0aecf45d82c::t_bf3d8bc9d4008a 334-345,349-353
+src/standard/web_build.ts
+  s_71a0aecf45d82c::t_8424347e9128df 809-810
+  s_71a0aecf45d82c::t_63f95bed410f6c 260-261
+  s_71a0aecf45d82c::t_0352af1843e198 691-707
+  s_71a0aecf45d82c::t_d790c51e746582 253-259,262-265
+  s_71a0aecf45d82c::t_98dc500a3445a0 764
+  s_71a0aecf45d82c::t_3c8d7655929fc6 777-778
+  s_71a0aecf45d82c::t_39ae7a52db7f31 608-615
+  s_71a0aecf45d82c::t_51290cf9924ce0 795
+  s_71a0aecf45d82c::t_7588de70dd6124 480-506
+src/standard/mod.ts
+  s_71a0aecf45d82c::t_b06cea943195c7 55-56
+  s_71a0aecf45d82c::t_c161768007ebbd 61-62
+  s_71a0aecf45d82c::t_785c97c07369d7 35-36
+deno.jsonc
+  s_71a0aecf45d82c::t_c4212f56c60ce4 3
+tests/standard/conformance_test.ts
+  s_71a0aecf45d82c::t_1e91b5a8a944ef 314-394
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "8f690581237f667163f54802260e2ec3874ca6ad",
+  "prompts": {},
+  "sessions": {
+    "s_71a0aecf45d82c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f6f6e806-c9db-459c-ba56-79aa27861998",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Robert DeLanghe <1240090+bdelanghe@users.noreply.github.com>"
+    }
+  }
+}
