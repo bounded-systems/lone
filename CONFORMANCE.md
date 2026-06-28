@@ -166,8 +166,10 @@ const evidence = {
     keyboardTested: true,
     screenReaderTested: true,
     completeFlows: true,
+    verifiedBy: "Acme Accessibility Auditors", // required for `met`; self-attested → not-assessed
   },
-  security: { achievedLevel: 2, knownCriticalOrHighVulns: 0 }, // targetLevel defaults to 2
+  asvs: { achievedLevel: 2, verifiedBy: "Acme Security Labs" }, // targetLevel defaults to 2; verifiedBy required for `met`
+  vulns: { knownCriticalOrHighVulns: 0 }, // tool-measured (e.g. npm audit), decoupled from asvs
   coreWebVitals: [
     {
       formFactor: "mobile",
@@ -199,8 +201,15 @@ const evidence = {
   must satisfy LCP ≤ 2500ms, INP ≤ 200ms, CLS ≤ 0.1 at `percentile ≥ 75`. Field
   data is preferred over a single Lighthouse/lab run. (`CLS 0.11` → fail;
   `INP 250` → fail; missing `desktop` → unmet.)
-- **OWASP ASVS** — `achievedLevel ≥ targetLevel` (target defaults to L2) **and**
-  zero known critical/high vulns.
+- **OWASP ASVS** (`asvs`) — `achievedLevel ≥ targetLevel` (target defaults to
+  L2) **and** an independent `verifiedBy` is named. A self-attested ASVS level
+  (no `verifiedBy`) is `not-assessed`, never `met` — self-grading does not gate
+  the claim.
+- **Known vulns** (`vulns`) — zero known critical/high vulns. Tool-measured
+  (e.g. `npm audit`) and decoupled from `asvs`, so the count stands alone.
+- **Manual WCAG 2.2 AA** (`manualA11y`) — all flows attested **and** an
+  independent `verifiedBy` is named; self-attested without a verifier is
+  `not-assessed`.
 - **Baseline** — `status: "widely"`, or a newer feature with `fallbackTested`.
 - **Reliability** — zero uncaught errors, zero broken internal links, critical
   journeys e2e-covered.

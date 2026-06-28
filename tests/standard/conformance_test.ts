@@ -32,8 +32,10 @@ const FULL_EVIDENCE: ExternalEvidenceInput = {
     keyboardTested: true,
     screenReaderTested: true,
     completeFlows: true,
+    verifiedBy: "Acme Accessibility Auditors",
   },
-  security: { achievedLevel: 2, knownCriticalOrHighVulns: 0 },
+  asvs: { achievedLevel: 2, verifiedBy: "Acme Security Labs" },
+  vulns: { knownCriticalOrHighVulns: 0 },
   coreWebVitals: [
     {
       formFactor: "mobile",
@@ -190,7 +192,7 @@ Deno.test("conformance - ASVS below target level is unmet", async () => {
   const lone = await loneOf(CLEAN_SUBJECT);
   const report = conformance(lone, {
     ...FULL_EVIDENCE,
-    security: { achievedLevel: 1, knownCriticalOrHighVulns: 0 },
+    asvs: { achievedLevel: 1, verifiedBy: "Acme Security Labs" },
   });
 
   const asvs = report.results.find((r) => r.id === "security.asvs");
@@ -202,13 +204,57 @@ Deno.test("conformance - known critical vuln fails the no-vulns criterion", asyn
   const lone = await loneOf(CLEAN_SUBJECT);
   const report = conformance(lone, {
     ...FULL_EVIDENCE,
-    security: { achievedLevel: 2, knownCriticalOrHighVulns: 1 },
+    vulns: { knownCriticalOrHighVulns: 1 },
   });
 
   const vulns = report.results.find((r) =>
     r.id === "security.no-critical-vulns"
   );
   assertEquals(vulns?.status, "unmet");
+});
+
+Deno.test("conformance - self-attested ASVS (no verifiedBy) is not-assessed, not met", async () => {
+  const lone = await loneOf(CLEAN_SUBJECT);
+  const report = conformance(lone, {
+    ...FULL_EVIDENCE,
+    asvs: { achievedLevel: 2 }, // level reached, but no independent verifier
+  });
+
+  const asvs = report.results.find((r) => r.id === "security.asvs");
+  assertEquals(asvs?.status, "not-assessed");
+  assert(asvs?.detail.includes("self-attested"));
+  // A self-graded level alone must NOT yield the compact claim.
+  assertEquals(report.conformant, false);
+});
+
+Deno.test("conformance - self-attested manual WCAG (no verifiedBy) is not-assessed, not met", async () => {
+  const lone = await loneOf(CLEAN_SUBJECT);
+  const report = conformance(lone, {
+    ...FULL_EVIDENCE,
+    manualA11y: {
+      wcag22AA: true,
+      keyboardTested: true,
+      screenReaderTested: true,
+      completeFlows: true,
+    }, // attested clean, but no independent verifier
+  });
+
+  const manual = report.results.find((r) => r.id === "a11y.wcag22-aa-manual");
+  assertEquals(manual?.status, "not-assessed");
+  assert(manual?.detail.includes("self-attested"));
+  assertEquals(report.conformant, false);
+});
+
+Deno.test("conformance - vulns are assessable with no asvs object present", async () => {
+  const lone = await loneOf(CLEAN_SUBJECT);
+  const report = conformance(lone, { vulns: { knownCriticalOrHighVulns: 3 } });
+
+  const vulns = report.results.find((r) =>
+    r.id === "security.no-critical-vulns"
+  );
+  assertEquals(vulns?.status, "unmet"); // 3 vulns, no asvs object needed
+  const asvs = report.results.find((r) => r.id === "security.asvs");
+  assertEquals(asvs?.status, "not-assessed"); // absent asvs → not-assessed
 });
 
 Deno.test("conformance - Baseline newly available needs a tested fallback", async () => {
