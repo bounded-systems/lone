@@ -42,6 +42,7 @@ module exists to prevent.
 | **Accessibility** | WCAG 2.2             | Selected AAA criteria _(recommended — does **not** gate the claim)_                  | external |
 | **Security**      | OWASP ASVS 5.0.0     | Level 2 (Level 3 for highly sensitive)                                               | external |
 | **Security**      | OWASP ASVS 5.0.0     | Zero known critical/high exploitable vulns                                           | external |
+| **Security**      | RFC 6797 / preload   | On the HSTS preload list _(external grader; recommended — does **not** gate)_        | external |
 | **Performance**   | Core Web Vitals      | LCP ≤ 2.5s, INP ≤ 200ms, CLS ≤ 0.1 at p75 on mobile **and** desktop (field data)     | external |
 | **Compatibility** | Baseline             | Baseline Widely Available (≥30 months interop), or a tested fallback                 | external |
 | **Reliability**   | runtime bar          | No uncaught errors; no broken internal links; critical journeys covered by e2e tests | external |
@@ -65,6 +66,8 @@ claim.
 | Area          | Standard                | Target                                    | Required    | Evidence  |
 | ------------- | ----------------------- | ----------------------------------------- | ----------- | --------- |
 | **Integrity** | SLSA / in-toto          | Provenance present, signed, and verified  | yes         | external  |
+| **Integrity** | SLSA                    | Build level ≥ target (default L3)         | recommended | external  |
+| **Integrity** | OpenSSF Scorecard       | Repository scores ≥ 7.0                   | recommended | external  |
 | **Integrity** | Reproducible Builds     | Build is byte-reproducible                | yes         | external  |
 | **Integrity** | SPDX                    | SBOM present, valid, complete, and signed | yes         | external  |
 | **Integrity** | RFC 9530                | Repr-Digest headers present               | recommended | external¹ |
@@ -213,6 +216,20 @@ const evidence = {
 - **Baseline** — `status: "widely"`, or a newer feature with `fallbackTested`.
 - **Reliability** — zero uncaught errors, zero broken internal links, critical
   journeys e2e-covered.
+
+### External graders (independent by construction; recommended, non-gating)
+
+These read an **independent third-party grade**, so unlike self-attestation they
+need no `verifiedBy`. They are recommended (`required: false`) and never widen
+the compact claim.
+
+- **HSTS preload** (`hstsPreload`) — `met` when `preloaded` (the
+  Chromium-maintained preload list). Area `security`.
+- **OpenSSF Scorecard** (`scorecard`) — `met` when `score ≥ 7.0` (0–10). Area
+  `integrity`.
+- **SLSA build level** (`slsaLevel`) — `met` when `level ≥ target` (target
+  defaults to L3). Distinct from `slsaProvenance` (present/signed/verified).
+  Area `integrity`.
 
 ## Claim-gating
 

@@ -34,6 +34,9 @@ function gatesCompactClaim(c: Criterion): boolean {
 /** Whether lone could not even read the subtree. */
 const INVALID_SUBJECT_CODE = "LONE_ENGINE_INVALID_SUBJECT";
 
+/** The OpenSSF Scorecard score at/above which `integrity.scorecard` is `met`. */
+const SCORECARD_THRESHOLD = 7.0;
+
 export type CriterionStatus = "met" | "unmet" | "not-assessed";
 
 /** A criterion plus the verdict reached for it. */
@@ -178,6 +181,14 @@ const EXTERNAL_EVALUATORS: Record<
       : unmet(`${v.knownCriticalOrHighVulns} known critical/high vuln(s)`);
   },
 
+  "security.hsts-preload": (e) => {
+    const v = e.hstsPreload;
+    if (!v) return notAssessed("no HSTS preload status supplied");
+    return v.preloaded
+      ? met("origin is on the HSTS preload list")
+      : unmet("origin is not on the HSTS preload list");
+  },
+
   "performance.core-web-vitals": (e) => {
     const samples = e.coreWebVitals;
     if (!samples || samples.length === 0) {
@@ -318,6 +329,26 @@ const EXTERNAL_EVALUATORS: Record<
     return gaps.length === 0
       ? met("SLSA/in-toto provenance present, signed, and verified")
       : unmet(gaps.join(", "));
+  },
+
+  "integrity.slsa-level": (e) => {
+    const v = e.slsaLevel;
+    if (!v) return notAssessed("no SLSA build level supplied");
+    return v.level >= v.target
+      ? met(`SLSA build Level ${v.level} (target L${v.target})`)
+      : unmet(`SLSA build Level ${v.level} below target L${v.target}`);
+  },
+
+  "integrity.scorecard": (e) => {
+    const v = e.scorecard;
+    if (!v) return notAssessed("no OpenSSF Scorecard result supplied");
+    return v.score >= SCORECARD_THRESHOLD
+      ? met(
+        `OpenSSF Scorecard ${v.score.toFixed(1)} (≥ ${SCORECARD_THRESHOLD})`,
+      )
+      : unmet(
+        `OpenSSF Scorecard ${v.score.toFixed(1)} below ${SCORECARD_THRESHOLD}`,
+      );
   },
 
   "integrity.reproducible-build": (e) => {
