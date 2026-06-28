@@ -1,0 +1,20 @@
+docs/testing/coga-usability-testing.md
+  s_0e0b4d6cd22542::t_cac608fbf72067 1-23,25-31,34-58,65-79,81-95,101-104
+  s_0e0b4d6cd22542::t_99958fca2a9bc4 24,32-33,59-64,80,96-100
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "4ae7c8c20a834e04ab74e20e1a9e70a1bd6ecbad",
+  "prompts": {},
+  "sessions": {
+    "s_0e0b4d6cd22542": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "25ca02d8-0ea9-405f-8441-40cf7bf0ee57",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Robert DeLanghe <1240090+bdelanghe@users.noreply.github.com>"
+    }
+  }
+}
