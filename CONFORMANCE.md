@@ -277,6 +277,26 @@ claim      = conformant ? COMPACT_CLAIM : honest partial summary
    evidence throws. The only way to the compact claim is real, supplied,
    in-threshold evidence for every gating criterion.
 
+## Prior art — honest grading is where the credible work lands
+
+The honest-reporting rule is not pedantry; it is where rigorous work in adjacent
+fields already sits. ARM (Chinaei, 2026), a runtime reference monitor for AI
+agents, concedes **in print** that _complete mediation_ — the guarantee that
+every privileged action actually passes the monitor — is an **operational
+deployment assumption, not a code-level guarantee**, and grades its own
+evaluation to match: one layer varied, the rest held fixed, the weak baseline
+named a strawman out loud rather than dressed up as a win.
+
+That is lone's move in a different domain. A clean pass certifies only what the
+mechanism can actually see. ARM's monitor does not see paths that bypass it;
+lone's static validators do not see the manual flow (complete-flow keyboard and
+screen-reader testing no static tool can perform). Neither lets the mechanism's
+**reach** be mistaken for the claim's **scope** — which is exactly why
+self-attested coverage here is `not-assessed`, never `met`, and why a clean
+static check means "no known automatable defect", not "conformant". The gap
+between what a boundary can verify and what a claim would assert is real in
+every serious system; the discipline is naming it, not closing it by assertion.
+
 ## API
 
 ```ts
