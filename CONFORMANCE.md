@@ -82,19 +82,51 @@ lone-measurable in principle at the transport layer in future.
 > **interface-complexity budget (W3C COGA-derived)** — it is explicitly **NOT**
 > a "cognitive-load measurement." It scores the rendered interface (choice
 > density, primary-action count, heading depth, clear link purpose,
-> interruptions, form/memory burden, motion, consistency, progressive
-> disclosure), not a person's cognition.
+> interruptions, form/memory burden, motion, progressive disclosure), not a
+> person's cognition.
 
 | Area          | Standard           | Target                                                                         | Required    | Evidence  |
 | ------------- | ------------------ | ------------------------------------------------------------------------------ | ----------- | --------- |
 | **Cognitive** | W3C COGA (derived) | Rendered DOM within an interface-complexity budget                             | recommended | **lone**² |
 | **Cognitive** | W3C COGA           | Usability testing with people with cognitive disabilities; critical tasks pass | recommended | external  |
 
-² lone-measurable **in principle**, but the rendered-DOM validators are a
-deliberate **follow-on** (`pendingValidators`). Until they land, this criterion
-is reported as **`not-assessed`** — calling an uninstrumented criterion "met"
-just because there are no findings would be overclaim. See the
-`TODO: validators` note in `web_build.ts`.
+² **Now lone-measurable** — the rendered-DOM validators landed in **0.4.0**
+(`validate/cognitive_budget.ts`, `LONE_COGA_*`). The budget is scored statically
+from the subtree; `met` when there is **no error-severity** `LONE_COGA_`
+finding, `unmet` when there is. The criterion stays **recommended**
+(`required: false`) and **never** widens the tier-1 compact claim. It remains an
+**interface-complexity budget**, explicitly **NOT** a cognitive-load
+measurement.
+
+#### Interface-complexity budget rules (`LONE_COGA_*`)
+
+Each rule is a named, documented budget over the rendered DOM subtree — not a
+measure of anyone's cognition. The only **error**-severity findings are the two
+genuine automatic on-load interruptions (autoplay, on-load modal); everything
+else is a recommendation (warning/info), so the budget reports honestly without
+silently failing a build.
+
+| Code                                  | Rule (default threshold)                                                                                                                        | Severity |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `LONE_COGA_CHOICE_DENSITY`            | Interactive controls attributed to one region `> 10` (`CHOICE_DENSITY_MAX`)                                                                     | warning  |
+| `LONE_COGA_COMPETING_PRIMARY_ACTIONS` | More than one visually-"primary" action competing in a region (`COMPETING_PRIMARY_ACTIONS_MAX = 1`)                                             | warning  |
+| `LONE_COGA_CONTENT_DENSITY`           | Leaf-text words in one content section `> 600` (`CONTENT_DENSITY_MAX_WORDS`)                                                                    | info     |
+| `LONE_COGA_HEADING_DEPTH`             | Heading nested past level `4` (`HEADING_DEPTH_MAX`)                                                                                             | warning  |
+| `LONE_COGA_MULTIPLE_H1`               | More than one `h1` — one clear top-level heading (`MAX_H1 = 1`)                                                                                 | warning  |
+| `LONE_COGA_UNCLEAR_LINK_PURPOSE`      | Bare link text ("click here", "learn more", "read more", …) that doesn't state its purpose                                                      | warning  |
+| `LONE_COGA_ICON_ONLY_LINK_UNLABELED`  | Link with no discernible accessible name (icon/image only)                                                                                      | warning  |
+| `LONE_COGA_AUTOPLAY_MEDIA`            | `<video>`/`<audio>` with `autoplay` — an on-load interruption                                                                                   | error    |
+| `LONE_COGA_MODAL_ON_LOAD`             | `dialog[open]` / `[aria-modal]` shown in the initial render — a forced context change                                                           | error    |
+| `LONE_COGA_FOCUS_THEFT`               | `autofocus` moves focus on load without user intent                                                                                             | warning  |
+| `LONE_COGA_FORM_BURDEN`               | Form fields `> 12` (`FORM_FIELD_BURDEN_MAX`)                                                                                                    | warning  |
+| `LONE_COGA_FORM_REQUIRED_BURDEN`      | Required fields `> 8` (`FORM_REQUIRED_BURDEN_MAX`)                                                                                              | info     |
+| `LONE_COGA_MOTION_NO_REDUCED_GUARD`   | Animation/motion marker with no detectable reduced-motion guard (heuristic — a subtree can't see `@media (prefers-reduced-motion)`)             | warning  |
+| `LONE_COGA_PROGRESSIVE_DISCLOSURE`    | Simultaneously-visible sections in a region `> 10` (`DISCLOSURE_MAX_SECTIONS`) with no disclosure affordance (tabs/accordion/`<details>`/steps) | info     |
+
+Thresholds are exported named constants (`CHOICE_DENSITY_MAX`, `MAX_H1`, …) and
+deliberately generous: a finding means "this region is past the budget", not
+"this is broken". The validator runs as part of `validate()`, so a normal
+blessing already feeds the criterion.
 
 ## Evidence source: lone-measurable vs external
 
@@ -110,6 +142,7 @@ already run feeds the report — no extra inputs.
 | `html.dom-author-requirements` | `semantic_html` (`LONE_SEMANTIC_*`)                                                                              |
 | `a11y.aria-author`             | `aria_usage` (`LONE_ARIA_*`)                                                                                     |
 | `a11y.wcag22-aa-auto`          | `nameable`, `text_alternatives`, `screen_reader_content`, `keyboard_accessible`, `color_contrast`, `reader_view` |
+| `cognitive.complexity-budget`  | `cognitive_budget` (`LONE_COGA_*`) — interface-complexity budget; recommended, non-gating                        |
 
 A lone criterion is `met` when its matching findings contain **no
 error-severity** finding, `unmet` when they do, and `not-assessed` when the
@@ -239,15 +272,24 @@ conformant, claim }`).
 ## Versioning
 
 The conformance standard first shipped in **0.2.0**. The tier-2/tier-3 +
-cognitive-accessibility extension ships in **0.3.0** — purely **additive**:
+cognitive-accessibility extension shipped in **0.3.0**.
 
-- new optional `Criterion` fields (`tier`, `pendingValidators`), new
-  `ConformanceArea`s, new `ConformanceTier`, new evidence schemas, a new
-  `areaSummaries` field on `ConformanceReport`;
-- **no change** to `Blessed<T>`, `FindingType`, `bless()`, `validate()`, the
-  `COMPACT_CLAIM` string, or any tier-1 evaluator/threshold.
+**0.4.0** lands the cognitive interface-complexity-budget DOM validators —
+purely **additive**:
 
-Because the bump is a minor under `0.x`, consumers pinned to **`^0.2` will NOT
-auto-pull `0.3`** (`^0.x.y` is treated as `~0.x` — patch-only — until 1.0). Opt
-in explicitly by widening to `^0.3` (or `>=0.2 <0.4`). Adopting the new tiers is
-intentional and opt-in.
+- new `validate/cognitive_budget.ts` (`LONE_COGA_*` findings) wired into
+  `validate()`, exported from `mod.ts` (the validator + its named threshold
+  constants);
+- `cognitive.complexity-budget` is no longer `pendingValidators` — it is now fed
+  by those findings and reports `met`/`unmet`/`not-assessed` like the other lone
+  criteria. It stays `required: false` (recommended) and **never** widens the
+  tier-1 compact claim;
+- **no change** to `Blessed<T>`, `FindingType`, `bless()`'s signature, the
+  `COMPACT_CLAIM` string, or any tier-1 evaluator/threshold. (`validate()` now
+  emits additional recommendation-level `LONE_COGA_*` findings on interfaces
+  that exceed the budget — a clean, well-structured subtree is unaffected.)
+
+Because the bump is a minor under `0.x`, consumers pinned to **`^0.3` will NOT
+auto-pull `0.4`** (`^0.x.y` is treated as `~0.x` — patch-only — until 1.0). Opt
+in explicitly by widening to `^0.4` (or `>=0.3 <0.5`). Adopting the budget
+validators is intentional and opt-in.

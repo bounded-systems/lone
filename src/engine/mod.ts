@@ -10,6 +10,7 @@ import { validateTextAlternatives } from "../validate/text_alternatives.ts";
 import { validateScreenReaderContent } from "../validate/screen_reader_content.ts";
 import { validateColorContrast } from "../validate/color_contrast.ts";
 import { validateReaderView } from "../validate/reader_view.ts";
+import { validateCognitiveBudget } from "../validate/cognitive_budget.ts";
 
 export { unfoldElement, unfoldNode, type UnfoldResult } from "./unfold.ts";
 
@@ -58,6 +59,7 @@ export async function validate<T extends Element>(
   findings.push(...validateScreenReaderContent(root));
   findings.push(...validateColorContrast(root));
   findings.push(...validateReaderView(root));
+  findings.push(...validateCognitiveBudget(root));
 
   return { findings: sortFindings(findings) };
 }
