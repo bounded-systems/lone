@@ -46,6 +46,56 @@ module exists to prevent.
 | **Compatibility** | Baseline             | Baseline Widely Available (≥30 months interop), or a tested fallback                 | external |
 | **Reliability**   | runtime bar          | No uncaught errors; no broken internal links; critical journeys covered by e2e tests | external |
 
+### Tier-2 — machine-readable structured content + technical SEO
+
+Reported in `results` + `areaSummaries`; **never** widens the tier-1 compact
+claim.
+
+| Area         | Standard                          | Target                                                                      | Required    | Evidence |
+| ------------ | --------------------------------- | --------------------------------------------------------------------------- | ----------- | -------- |
+| **Semantic** | JSON-LD 1.1 / SHACL               | Structured data conforms to its SHACL shapes (`conforms`, `blocks: 0`)      | yes         | external |
+| **SEO**      | technical / RFC 9309              | Canonical, unique titles, RFC 9309 robots, sitemap resolves, 0 broken links | yes         | external |
+| **Semantic** | CommonMark                        | Markdown parses cleanly under CommonMark                                    | yes         | external |
+| **Semantic** | llms.txt convention               | `llms.txt` present, links resolve, Markdown siblings exposed                | recommended | external |
+| **Semantic** | OpenAPI 3.2 / JSON Schema 2020-12 | OpenAPI valid; responses match schemas — _only if an API is published_      | conditional | external |
+| **Semantic** | RFC 4287                          | Atom feed valid                                                             | recommended | external |
+
+### Tier-3 — integrity / provenance / reproducibility
+
+| Area          | Standard                | Target                                    | Required    | Evidence  |
+| ------------- | ----------------------- | ----------------------------------------- | ----------- | --------- |
+| **Integrity** | SLSA / in-toto          | Provenance present, signed, and verified  | yes         | external  |
+| **Integrity** | Reproducible Builds     | Build is byte-reproducible                | yes         | external  |
+| **Integrity** | SPDX                    | SBOM present, valid, complete, and signed | yes         | external  |
+| **Integrity** | RFC 9530                | Repr-Digest headers present               | recommended | external¹ |
+| **Integrity** | Bounded Systems release | Release manifest present and signed       | yes         | external  |
+| **Integrity** | IPFS / CIDv1            | A content-addressed IPFS CID is recorded  | recommended | external  |
+| **Integrity** | RFC 9110                | HTTP semantics conform to RFC 9110        | recommended | external  |
+
+¹ Content digests are an HTTP response-header concern (out of a DOM subtree's
+reach today), so they are supplied as external evidence; they are
+lone-measurable in principle at the transport layer in future.
+
+### Cognitive accessibility — W3C COGA (new area)
+
+> **Honest labelling:** `cognitive.complexity-budget` is an
+> **interface-complexity budget (W3C COGA-derived)** — it is explicitly **NOT**
+> a "cognitive-load measurement." It scores the rendered interface (choice
+> density, primary-action count, heading depth, clear link purpose,
+> interruptions, form/memory burden, motion, consistency, progressive
+> disclosure), not a person's cognition.
+
+| Area          | Standard           | Target                                                                         | Required    | Evidence  |
+| ------------- | ------------------ | ------------------------------------------------------------------------------ | ----------- | --------- |
+| **Cognitive** | W3C COGA (derived) | Rendered DOM within an interface-complexity budget                             | recommended | **lone**² |
+| **Cognitive** | W3C COGA           | Usability testing with people with cognitive disabilities; critical tasks pass | recommended | external  |
+
+² lone-measurable **in principle**, but the rendered-DOM validators are a
+deliberate **follow-on** (`pendingValidators`). Until they land, this criterion
+is reported as **`not-assessed`** — calling an uninstrumented criterion "met"
+just because there are no findings would be overclaim. See the
+`TODO: validators` note in `web_build.ts`.
+
 ## Evidence source: lone-measurable vs external
 
 This split is the heart of the design, and it is honest in the types.
@@ -125,13 +175,30 @@ const evidence = {
 ## Claim-gating
 
 ```
-conformant = every criterion with `required: true` is `met`
+conformant = every TIER-1 `required: true` criterion is `met`
 claim      = conformant ? COMPACT_CLAIM : honest partial summary
 ```
 
+- **The compact claim stays tier-1-only.** The `COMPACT_CLAIM` string is
+  unchanged and is gated **only** on the original tier-1 required set. Tier-2,
+  tier-3, and cognitive criteria are reported in `results` and rolled up in
+  `areaSummaries`, but they **never** widen the headline claim — even when they
+  are `required: true` within their own tier.
+  (`conformant = c.required && (c.tier
+  ?? 1) === 1`; criteria with no explicit
+  `tier` are tier-1.) **Overclaim-avoidance is the whole point** — we do **not**
+  invent a longer compact claim string.
+- This is the **(b)-lite design**: one compact claim PLUS honest per-area
+  summaries. Each `areaSummary` is
+  `{ area, met, unmet, notAssessed, total,
+  summary }`, where `summary` is an
+  honest one-liner like `"integrity: 5/7 met (2
+  not assessed)"`.
 - AAA (`a11y.wcag22-aaa-selected`) is **recommended** (`required: false`): it is
   reported, but it does **not** block the compact claim — matching the claim
   text, which mentions AA, not AAA.
+- A new required tier-2/tier-3 criterion with **no evidence** is `not-assessed`
+  (never `unmet`), so an all-tier-1 build still earns the exact compact claim.
 - When not conformant, the claim is an honest partial summary, e.g.:
 
   > Partial conformance: automated DOM checks clean; WCAG 2.2 AA (manual audit)
@@ -171,7 +238,16 @@ conformant, claim }`).
 
 ## Versioning
 
-This API ships in **0.2.0** (additive — no change to `Blessed<T>`,
-`FindingType`, `bless()`, or `validate()`). Consumers pinned to `^0.1` will
-**not** auto-pull it; adopting the conformance standard is intentional and
-opt-in (bump to `^0.2`).
+The conformance standard first shipped in **0.2.0**. The tier-2/tier-3 +
+cognitive-accessibility extension ships in **0.3.0** — purely **additive**:
+
+- new optional `Criterion` fields (`tier`, `pendingValidators`), new
+  `ConformanceArea`s, new `ConformanceTier`, new evidence schemas, a new
+  `areaSummaries` field on `ConformanceReport`;
+- **no change** to `Blessed<T>`, `FindingType`, `bless()`, `validate()`, the
+  `COMPACT_CLAIM` string, or any tier-1 evaluator/threshold.
+
+Because the bump is a minor under `0.x`, consumers pinned to **`^0.2` will NOT
+auto-pull `0.3`** (`^0.x.y` is treated as `~0.x` — patch-only — until 1.0). Opt
+in explicitly by widening to `^0.3` (or `>=0.2 <0.4`). Adopting the new tiers is
+intentional and opt-in.

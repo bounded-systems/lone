@@ -10,6 +10,7 @@
 import type { FindingType } from "../contracts/finding.ts";
 import {
   COMPACT_CLAIM,
+  type ConformanceArea,
   CRITERIA,
   type Criterion,
   CWV_THRESHOLDS,
@@ -19,6 +20,16 @@ import {
   STANDARD_NAME,
   STANDARD_VERSION,
 } from "./web_build.ts";
+
+/**
+ * Whether a criterion gates the headline COMPACT_CLAIM. Only the tier-1 required
+ * criteria do — tier-2/tier-3/cognitive criteria are reported and summarised but
+ * NEVER widen the compact claim (overclaim-avoidance is the whole point).
+ * Criteria with no explicit `tier` are tier-1 (the original standard).
+ */
+function gatesCompactClaim(c: Criterion): boolean {
+  return c.required && (c.tier ?? 1) === 1;
+}
 
 /** Whether lone could not even read the subtree. */
 const INVALID_SUBJECT_CODE = "LONE_ENGINE_INVALID_SUBJECT";
@@ -41,12 +52,34 @@ export type ConformanceSummary = {
   total: number;
 };
 
+/**
+ * A per-area roll-up. Each area (a11y, semantic, SEO, integrity, cognitive, …)
+ * reports its own met/total + an honest one-liner. This is the (b)-lite design:
+ * a SINGLE compact claim (tier-1 only) PLUS honest, non-overclaiming per-area
+ * summaries — so tier-2/tier-3/cognitive progress is visible without ever being
+ * folded into the headline claim string.
+ */
+export type ConformanceAreaSummary = {
+  area: ConformanceArea;
+  met: number;
+  unmet: number;
+  notAssessed: number;
+  total: number;
+  /** Honest one-liner; never the compact claim and never an overclaim. */
+  summary: string;
+};
+
 export type ConformanceReport = {
   standard: string;
   version: string;
   results: CriterionResult[];
   summary: ConformanceSummary;
-  /** True iff every `required` criterion is `met`. */
+  /** Per-area roll-ups (one per area present in `results`). */
+  areaSummaries: ConformanceAreaSummary[];
+  /**
+   * True iff every criterion that gates the compact claim (the tier-1 `required`
+   * set) is `met`. Tier-2/tier-3/cognitive criteria do NOT affect this flag.
+   */
   conformant: boolean;
   /**
    * The compact claim string iff `conformant`, otherwise an honest partial
@@ -184,6 +217,162 @@ const EXTERNAL_EVALUATORS: Record<
       ? met("no runtime errors, no broken links, critical journeys e2e-covered")
       : unmet(gaps.join(", "));
   },
+
+  // ── Tier-2 — machine-readable structured content + technical SEO ─────────
+  "semantic.jsonld-shacl": (e) => {
+    const v = e.jsonLdShacl;
+    if (!v) return notAssessed("no JSON-LD/SHACL report supplied");
+    return v.conforms && v.blocks === 0
+      ? met("JSON-LD 1.1 conforms to SHACL shapes (0 violating blocks)")
+      : unmet(
+        v.conforms
+          ? `${v.blocks} SHACL-violating block(s)`
+          : `SHACL does not conform (${v.blocks} block(s))`,
+      );
+  },
+
+  "seo.technical": (e) => {
+    const v = e.seoTechnical;
+    if (!v) return notAssessed("no technical-SEO report supplied");
+    const gaps: string[] = [];
+    if (!v.canonicalOk) gaps.push("canonical issues");
+    if (!v.titlesUnique) gaps.push("non-unique titles");
+    if (!v.robotsRfc9309Ok) gaps.push("robots.txt not RFC 9309-valid");
+    if (!v.sitemapResolves) gaps.push("sitemap does not resolve");
+    if (v.brokenInternalLinks !== 0) {
+      gaps.push(`${v.brokenInternalLinks} broken internal link(s)`);
+    }
+    return gaps.length === 0
+      ? met("canonical/titles/robots/sitemap clean, 0 broken internal links")
+      : unmet(gaps.join(", "));
+  },
+
+  "semantic.commonmark": (e) => {
+    const v = e.commonMark;
+    if (!v) return notAssessed("no CommonMark report supplied");
+    return v.conforms
+      ? met("Markdown conforms to CommonMark")
+      : unmet("Markdown does not conform to CommonMark");
+  },
+
+  "semantic.ai-readability": (e) => {
+    const v = e.aiReadability;
+    if (!v) return notAssessed("no AI-readability report supplied (optional)");
+    const gaps: string[] = [];
+    if (!v.llmsTxtPresent) gaps.push("llms.txt missing");
+    if (!v.linksResolve) gaps.push("llms.txt links do not resolve");
+    if (!v.markdownSiblings) gaps.push("no Markdown siblings");
+    return gaps.length === 0
+      ? met("llms.txt present, links resolve, Markdown siblings exposed")
+      : unmet(gaps.join(", "));
+  },
+
+  "semantic.openapi": (e) => {
+    const v = e.openApi;
+    if (!v) {
+      return notAssessed(
+        "no OpenAPI report supplied (only applies if an API is published)",
+      );
+    }
+    const gaps: string[] = [];
+    if (!v.openapiValid) gaps.push("OpenAPI document invalid");
+    if (!v.responsesMatchSchemas) gaps.push("responses diverge from schemas");
+    return gaps.length === 0
+      ? met("OpenAPI 3.2 valid; responses match JSON Schema 2020-12")
+      : unmet(gaps.join(", "));
+  },
+
+  "semantic.feeds": (e) => {
+    const v = e.feeds;
+    if (!v) return notAssessed("no feed report supplied (optional)");
+    return v.atomValid
+      ? met("Atom feed valid (RFC 4287)")
+      : unmet("Atom feed invalid");
+  },
+
+  // ── Tier-3 — integrity / provenance / reproducibility ────────────────────
+  "integrity.slsa-provenance": (e) => {
+    const v = e.slsaProvenance;
+    if (!v) return notAssessed("no SLSA/in-toto provenance supplied");
+    const gaps: string[] = [];
+    if (!v.present) gaps.push("not present");
+    if (!v.signed) gaps.push("not signed");
+    if (!v.verified) gaps.push("not verified");
+    return gaps.length === 0
+      ? met("SLSA/in-toto provenance present, signed, and verified")
+      : unmet(gaps.join(", "));
+  },
+
+  "integrity.reproducible-build": (e) => {
+    const v = e.reproducibleBuild;
+    if (!v) return notAssessed("no reproducible-build report supplied");
+    return v.reproducible
+      ? met("build is byte-reproducible")
+      : unmet("build is not reproducible");
+  },
+
+  "integrity.sbom": (e) => {
+    const v = e.sbom;
+    if (!v) return notAssessed("no SPDX SBOM supplied");
+    const gaps: string[] = [];
+    if (!v.present) gaps.push("not present");
+    if (!v.valid) gaps.push("not valid");
+    if (!v.complete) gaps.push("incomplete");
+    if (!v.signed) gaps.push("not signed");
+    return gaps.length === 0
+      ? met("SPDX SBOM present, valid, complete, and signed")
+      : unmet(gaps.join(", "));
+  },
+
+  "integrity.content-digests": (e) => {
+    const v = e.contentDigests;
+    if (!v) return notAssessed("no content-digest report supplied (optional)");
+    return v.reprDigestHeaders
+      ? met("Repr-Digest headers present (RFC 9530)")
+      : unmet("no Repr-Digest headers");
+  },
+
+  "integrity.signed-release-manifest": (e) => {
+    const v = e.signedReleaseManifest;
+    if (!v) return notAssessed("no release-manifest report supplied");
+    const gaps: string[] = [];
+    if (!v.present) gaps.push("not present");
+    if (!v.signed) gaps.push("not signed");
+    return gaps.length === 0
+      ? met("release manifest present and signed")
+      : unmet(gaps.join(", "));
+  },
+
+  "integrity.ipfs-cid": (e) => {
+    const v = e.ipfsCid;
+    if (!v) return notAssessed("no IPFS CID report supplied (optional)");
+    return v.cidRecorded
+      ? met("IPFS CID recorded")
+      : unmet("no IPFS CID recorded");
+  },
+
+  "integrity.http-rfc9110": (e) => {
+    const v = e.httpRfc9110;
+    if (!v) return notAssessed("no RFC 9110 HTTP report supplied (optional)");
+    return v.conforms
+      ? met("HTTP semantics conform to RFC 9110")
+      : unmet("HTTP semantics do not conform to RFC 9110");
+  },
+
+  // ── Cognitive accessibility (W3C COGA) — manual usability testing ────────
+  "cognitive.coga-usability-testing": (e) => {
+    const v = e.cogaUsability;
+    if (!v) return notAssessed("no COGA usability testing supplied (optional)");
+    const gaps: string[] = [];
+    if (!v.conducted) gaps.push("not conducted");
+    if (!v.withCognitiveDisabilities) {
+      gaps.push("not tested with people with cognitive disabilities");
+    }
+    if (!v.criticalTasksPassed) gaps.push("critical tasks failed");
+    return gaps.length === 0
+      ? met("COGA usability testing conducted; critical tasks passed")
+      : unmet(gaps.join(", "));
+  },
 };
 
 function met(detail: string): ExternalVerdict {
@@ -256,6 +445,19 @@ export function conformance(
 
   const results: CriterionResult[] = CRITERIA.map((c) => {
     if (c.evidence === "lone") {
+      // Lone-measurable IN PRINCIPLE but validators not yet built: report
+      // not-assessed. Calling it "met" on an absence of findings would be
+      // overclaim — the criterion has not actually been checked.
+      if (c.pendingValidators) {
+        return {
+          ...c,
+          status: "not-assessed",
+          detail:
+            "interface-complexity budget (W3C COGA-derived) — DOM validators " +
+            "not yet implemented; reported but non-gating (see TODO in web_build.ts)",
+          findings: [],
+        };
+      }
       return evaluateLone(c, findings, subjectInvalid);
     }
     const evaluator = EXTERNAL_EVALUATORS[c.id];
@@ -272,7 +474,10 @@ export function conformance(
     total: results.length,
   };
 
-  const gating = results.filter((r) => r.required);
+  // The compact claim is gated on the TIER-1 required set ONLY. Tier-2/tier-3/
+  // cognitive criteria appear in `results` and `areaSummaries` but never widen
+  // the headline claim.
+  const gating = results.filter((r) => gatesCompactClaim(r));
   const conformant = gating.every((r) => r.status === "met");
 
   return {
@@ -280,16 +485,49 @@ export function conformance(
     version: STANDARD_VERSION,
     results,
     summary,
+    areaSummaries: buildAreaSummaries(results),
     conformant,
     claim: conformant ? COMPACT_CLAIM : partialSummary(results),
   };
+}
+
+/** Roll up results per area into an honest, non-overclaiming one-liner each. */
+function buildAreaSummaries(
+  results: CriterionResult[],
+): ConformanceAreaSummary[] {
+  const order: ConformanceArea[] = [];
+  for (const r of results) if (!order.includes(r.area)) order.push(r.area);
+
+  return order.map((area) => {
+    const inArea = results.filter((r) => r.area === area);
+    const met = inArea.filter((r) => r.status === "met").length;
+    const unmet = inArea.filter((r) => r.status === "unmet").length;
+    const notAssessed = inArea.filter((r) =>
+      r.status === "not-assessed"
+    ).length;
+    const total = inArea.length;
+
+    const tail: string[] = [];
+    if (unmet > 0) tail.push(`${unmet} unmet`);
+    if (notAssessed > 0) tail.push(`${notAssessed} not assessed`);
+    const suffix = tail.length > 0 ? ` (${tail.join(", ")})` : "";
+    const summary = `${area}: ${met}/${total} met${suffix}`;
+
+    return { area, met, unmet, notAssessed, total, summary };
+  });
 }
 
 /** Build an honest partial summary naming what is clean, unmet, and unassessed. */
 function partialSummary(results: CriterionResult[]): string {
   const parts: string[] = [];
 
-  const loneResults = results.filter((r) => r.evidence === "lone");
+  // Only INSTRUMENTED lone criteria speak to "automated DOM checks". A
+  // pending-validators criterion (e.g. the cognitive interface-complexity
+  // budget) is always not-assessed and must not be mistaken for an invalid
+  // subject here.
+  const loneResults = results.filter(
+    (r) => r.evidence === "lone" && !r.pendingValidators,
+  );
   const loneNotAssessed = loneResults.some((r) => r.status === "not-assessed");
   const loneUnmet = loneResults.filter((r) => r.status === "unmet");
   if (loneNotAssessed) {
@@ -304,7 +542,12 @@ function partialSummary(results: CriterionResult[]): string {
     );
   }
 
-  const gating = results.filter((r) => r.required && r.evidence === "external");
+  // Scope the headline partial summary to the compact-claim gate (tier-1
+  // external). Tier-2/tier-3/cognitive progress lives in `areaSummaries`, not
+  // in this single-claim string.
+  const gating = results.filter(
+    (r) => gatesCompactClaim(r) && r.evidence === "external",
+  );
   const unmet = gating.filter((r) => r.status === "unmet");
   const unassessed = gating.filter((r) => r.status === "not-assessed");
   for (const r of unmet) parts.push(`${r.label} unmet`);

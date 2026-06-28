@@ -17,14 +17,49 @@
 
 import { z } from "zod";
 
-/** The six conformance areas covered by the standard. */
+/**
+ * The conformance areas covered by the standard.
+ *
+ * Tier-1 (the original standard): html, accessibility, security, performance,
+ * compatibility, reliability.
+ *
+ * Added in tier-2/tier-3 + cognitive accessibility (all ADDITIVE — they extend
+ * the report and the area summaries but never widen the tier-1 compact claim):
+ *   - "semantic"  — machine-readable structured content (JSON-LD/SHACL,
+ *                   CommonMark, AI-readability, OpenAPI, feeds).
+ *   - "seo"       — technical SEO correctness.
+ *   - "integrity" — supply-chain / provenance / reproducibility.
+ *   - "cognitive" — interface-complexity budget (W3C COGA-derived) + COGA
+ *                   usability testing. NOTE: this is an interface-complexity
+ *                   budget, explicitly NOT a "cognitive-load measurement".
+ */
 export type ConformanceArea =
   | "html"
   | "accessibility"
   | "security"
   | "performance"
   | "compatibility"
-  | "reliability";
+  | "reliability"
+  | "semantic"
+  | "seo"
+  | "integrity"
+  | "cognitive";
+
+/**
+ * The standard "tier" a criterion belongs to.
+ *
+ *   1            — the original web-build conformance standard (tier-1). ONLY
+ *                  tier-1 `required` criteria gate the COMPACT_CLAIM.
+ *   2            — machine-readable structured content + technical SEO.
+ *   3            — integrity / provenance / reproducibility.
+ *   "cognitive"  — cognitive-accessibility (interface-complexity budget +
+ *                  COGA usability testing).
+ *
+ * Criteria added in tier-2/tier-3/cognitive are reported in `results` and in the
+ * per-area `areaSummaries`, but they NEVER widen the headline compact claim —
+ * overclaim-avoidance is the whole point of this module.
+ */
+export type ConformanceTier = 1 | 2 | 3 | "cognitive";
 
 /** Where a criterion's evidence comes from. */
 export type EvidenceSource = "lone" | "external";
@@ -53,6 +88,19 @@ export type Criterion = {
    * error-severity findings means the criterion is met. Empty for external.
    */
   readonly loneCodes?: readonly string[];
+  /**
+   * The standard tier. Absent === tier-1 (the original standard). Only tier-1
+   * `required` criteria gate the COMPACT_CLAIM; tier-2/tier-3/cognitive criteria
+   * are reported but never widen the headline claim.
+   */
+  readonly tier?: ConformanceTier;
+  /**
+   * For criteria that are lone-measurable IN PRINCIPLE but whose DOM validators
+   * are not yet implemented (a deliberate follow-on). When true, the aggregator
+   * reports `not-assessed` rather than running findings — it would be overclaim
+   * to call an uninstrumented criterion "met" just because there are no findings.
+   */
+  readonly pendingValidators?: boolean;
 };
 
 /** Core Web Vitals thresholds (good, at p75). */
@@ -241,6 +289,222 @@ export const CRITERIA: readonly Criterion[] = [
     evidence: "external",
     required: true,
   },
+
+  // ══ TIER 2 — machine-readable structured content + technical SEO ═══════════
+  // Reported + summarised per-area; NEVER widens the tier-1 compact claim.
+
+  // ── Semantic — JSON-LD 1.1 + SHACL ───────────────────────────────────────
+  {
+    id: "semantic.jsonld-shacl",
+    area: "semantic",
+    label: "JSON-LD 1.1 + SHACL conformance",
+    standard: "JSON-LD 1.1 / SHACL",
+    target:
+      "Structured data parses as JSON-LD 1.1 and conforms to its SHACL shapes (zero violating blocks).",
+    level: "conforms",
+    evidence: "external",
+    required: true,
+    tier: 2,
+  },
+  // ── SEO — technical correctness ──────────────────────────────────────────
+  {
+    id: "seo.technical",
+    area: "seo",
+    label: "Technical SEO",
+    standard: "Search-engine technical guidelines / RFC 9309",
+    target:
+      "Canonical URLs correct, titles unique, robots.txt RFC 9309-valid, sitemap resolves, zero broken internal links.",
+    level: "clean",
+    evidence: "external",
+    required: true,
+    tier: 2,
+  },
+  // ── Semantic — CommonMark ────────────────────────────────────────────────
+  {
+    id: "semantic.commonmark",
+    area: "semantic",
+    label: "CommonMark conformance",
+    standard: "CommonMark",
+    target: "Authored Markdown parses cleanly under the CommonMark spec.",
+    level: "conforms",
+    evidence: "external",
+    required: true,
+    tier: 2,
+  },
+  // ── Semantic — AI-readability (llms.txt + markdown siblings) ──────────────
+  {
+    id: "semantic.ai-readability",
+    area: "semantic",
+    label: "AI-readability",
+    standard: "llms.txt convention",
+    target:
+      "llms.txt present, its links resolve, and HTML pages expose Markdown siblings for machine consumption.",
+    level: "recommended",
+    evidence: "external",
+    required: false,
+    tier: 2,
+  },
+  // ── Semantic — OpenAPI 3.2 + JSON Schema 2020-12 (only if an API exists) ──
+  {
+    id: "semantic.openapi",
+    area: "semantic",
+    label: "OpenAPI 3.2 + JSON Schema 2020-12",
+    standard: "OpenAPI 3.2 / JSON Schema 2020-12",
+    target:
+      "Published OpenAPI document is valid and responses match their declared JSON Schemas. Only applies if an API is published.",
+    level: "conditional",
+    evidence: "external",
+    required: false,
+    tier: 2,
+  },
+  // ── Semantic — Feeds (Atom RFC 4287) ─────────────────────────────────────
+  {
+    id: "semantic.feeds",
+    area: "semantic",
+    label: "Atom feed (RFC 4287)",
+    standard: "RFC 4287",
+    target: "Published feed is a valid Atom 1.0 document.",
+    level: "recommended",
+    evidence: "external",
+    required: false,
+    tier: 2,
+  },
+
+  // ══ TIER 3 — integrity / provenance / reproducibility ══════════════════════
+  // Reported + summarised per-area; NEVER widens the tier-1 compact claim.
+
+  // ── Integrity — SLSA provenance + in-toto ────────────────────────────────
+  {
+    id: "integrity.slsa-provenance",
+    area: "integrity",
+    label: "SLSA provenance + in-toto",
+    standard: "SLSA / in-toto",
+    target:
+      "Build emits in-toto/SLSA provenance that is present, signed, and verifies against the artifact.",
+    level: "present + signed + verified",
+    evidence: "external",
+    required: true,
+    tier: 3,
+  },
+  // ── Integrity — reproducible build ───────────────────────────────────────
+  {
+    id: "integrity.reproducible-build",
+    area: "integrity",
+    label: "Reproducible build",
+    standard: "Reproducible Builds",
+    target: "Re-running the build from source yields byte-identical artifacts.",
+    level: "reproducible",
+    evidence: "external",
+    required: true,
+    tier: 3,
+  },
+  // ── Integrity — SPDX SBOM ────────────────────────────────────────────────
+  {
+    id: "integrity.sbom",
+    area: "integrity",
+    label: "SPDX SBOM",
+    standard: "SPDX",
+    target:
+      "An SPDX SBOM is present, valid, complete (covers all components), and signed.",
+    level: "present + valid + complete + signed",
+    evidence: "external",
+    required: true,
+    tier: 3,
+  },
+  // ── Integrity — content digests (RFC 9530) ───────────────────────────────
+  // external/lone-measurable: Repr-Digest is an HTTP response header (out of a
+  // DOM subtree's reach today), so it is supplied as external evidence; it could
+  // become lone-measurable at the transport layer in future.
+  {
+    id: "integrity.content-digests",
+    area: "integrity",
+    label: "Content digests (RFC 9530)",
+    standard: "RFC 9530",
+    target: "Responses carry Repr-Digest (RFC 9530) representation digests.",
+    level: "recommended",
+    evidence: "external",
+    required: false,
+    tier: 3,
+  },
+  // ── Integrity — signed release manifest ──────────────────────────────────
+  {
+    id: "integrity.signed-release-manifest",
+    area: "integrity",
+    label: "Signed release manifest",
+    standard: "Bounded Systems release bar",
+    target:
+      "Each release ships a manifest of artifact digests that is present and signed.",
+    level: "present + signed",
+    evidence: "external",
+    required: true,
+    tier: 3,
+  },
+  // ── Integrity — IPFS CID recorded ────────────────────────────────────────
+  {
+    id: "integrity.ipfs-cid",
+    area: "integrity",
+    label: "IPFS CID recorded",
+    standard: "IPFS / CIDv1",
+    target:
+      "The release records a content-addressed IPFS CID for the artifact.",
+    level: "recommended",
+    evidence: "external",
+    required: false,
+    tier: 3,
+  },
+  // ── Integrity — HTTP correctness (RFC 9110) ──────────────────────────────
+  {
+    id: "integrity.http-rfc9110",
+    area: "integrity",
+    label: "HTTP correctness (RFC 9110)",
+    standard: "RFC 9110",
+    target: "Responses are semantically correct per RFC 9110 HTTP semantics.",
+    level: "recommended",
+    evidence: "external",
+    required: false,
+    tier: 3,
+  },
+
+  // ══ COGNITIVE ACCESSIBILITY — W3C COGA (NEW AREA) ══════════════════════════
+  // HONEST LABELING: this is an INTERFACE-COMPLEXITY BUDGET (W3C COGA-derived),
+  // explicitly NOT a "cognitive-load measurement". Reported + summarised but
+  // non-gating until the DOM validators land.
+
+  // ── Cognitive — interface-complexity budget (validators are a follow-on) ──
+  {
+    id: "cognitive.complexity-budget",
+    area: "cognitive",
+    label: "Interface-complexity budget (W3C COGA-derived)",
+    standard: "W3C COGA (derived)",
+    target:
+      "Rendered DOM stays within an interface-complexity budget: choice density, " +
+      "primary-action count, heading depth, clear link purpose, interruptions, " +
+      "form/memory burden, motion, consistency, progressive disclosure. " +
+      "This is an interface-complexity budget, NOT a cognitive-load measurement.",
+    level: "budget (recommended)",
+    evidence: "lone",
+    required: false,
+    tier: "cognitive",
+    // TODO: validators — implement the rendered-DOM complexity-budget validators
+    // (choice density, primary-action count, heading depth, clear-link-purpose,
+    // interruptions, form/memory burden, motion, consistency, disclosure) as a
+    // separate follow-on. Until then this criterion is reported as not-assessed.
+    pendingValidators: true,
+    loneCodes: ["LONE_COGA_"],
+  },
+  // ── Cognitive — COGA usability testing (manual, like the WCAG audit) ──────
+  {
+    id: "cognitive.coga-usability-testing",
+    area: "cognitive",
+    label: "COGA usability testing",
+    standard: "W3C COGA",
+    target:
+      "Usability testing conducted with people with cognitive disabilities; critical tasks pass.",
+    level: "manual (recommended)",
+    evidence: "external",
+    required: false,
+    tier: "cognitive",
+  },
 ] as const;
 
 // ── External evidence contracts (Zod) ───────────────────────────────────────
@@ -309,8 +573,105 @@ export const ReliabilityEvidence = z.object({
   e2eCriticalJourneys: z.boolean(),
 });
 
+// ── Tier-2 external evidence (machine-readable structured content + SEO) ─────
+
+/** JSON-LD 1.1 + SHACL validation result. */
+export const JsonLdShaclEvidence = z.object({
+  conforms: z.boolean(),
+  blocks: z.number().int().min(0),
+});
+
+/** Technical-SEO crawl result. */
+export const SeoTechnicalEvidence = z.object({
+  canonicalOk: z.boolean(),
+  titlesUnique: z.boolean(),
+  robotsRfc9309Ok: z.boolean(),
+  sitemapResolves: z.boolean(),
+  brokenInternalLinks: z.number().int().min(0),
+});
+
+/** CommonMark parse result. */
+export const CommonMarkEvidence = z.object({
+  conforms: z.boolean(),
+});
+
+/** AI-readability (llms.txt + markdown siblings) result. */
+export const AiReadabilityEvidence = z.object({
+  llmsTxtPresent: z.boolean(),
+  linksResolve: z.boolean(),
+  markdownSiblings: z.boolean(),
+});
+
+/** OpenAPI 3.2 + JSON Schema 2020-12 validation (only if an API is published). */
+export const OpenApiEvidence = z.object({
+  openapiValid: z.boolean(),
+  responsesMatchSchemas: z.boolean(),
+});
+
+/** Atom feed (RFC 4287) validation result. */
+export const FeedsEvidence = z.object({
+  atomValid: z.boolean(),
+});
+
+// ── Tier-3 external evidence (integrity / provenance / reproducibility) ──────
+
+/** SLSA provenance + in-toto attestation result. */
+export const SlsaProvenanceEvidence = z.object({
+  present: z.boolean(),
+  signed: z.boolean(),
+  verified: z.boolean(),
+});
+
+/** Reproducible-build result. */
+export const ReproducibleBuildEvidence = z.object({
+  reproducible: z.boolean(),
+});
+
+/** SPDX SBOM result. */
+export const SbomEvidence = z.object({
+  present: z.boolean(),
+  valid: z.boolean(),
+  complete: z.boolean(),
+  signed: z.boolean(),
+});
+
+/** Content digests (RFC 9530 Repr-Digest) result. */
+export const ContentDigestsEvidence = z.object({
+  reprDigestHeaders: z.boolean(),
+});
+
+/** Signed release-manifest result. */
+export const SignedReleaseManifestEvidence = z.object({
+  present: z.boolean(),
+  signed: z.boolean(),
+});
+
+/** IPFS CID-recorded result. */
+export const IpfsCidEvidence = z.object({
+  cidRecorded: z.boolean(),
+});
+
+/** RFC 9110 HTTP-correctness result. */
+export const HttpRfc9110Evidence = z.object({
+  conforms: z.boolean(),
+});
+
+// ── Cognitive-accessibility external evidence (W3C COGA) ─────────────────────
+
+/**
+ * COGA usability-testing attestation. Manual, like the WCAG 2.2 AA audit.
+ * NOTE: this attests that usability testing happened — it is NOT a cognitive-load
+ * measurement.
+ */
+export const CogaUsabilityEvidence = z.object({
+  conducted: z.boolean(),
+  withCognitiveDisabilities: z.boolean(),
+  criticalTasksPassed: z.boolean(),
+});
+
 /** The full external-evidence envelope. Every field is optional. */
 export const ExternalEvidence = z.object({
+  // tier-1
   htmlValidator: HtmlValidatorEvidence.optional(),
   manualA11y: ManualA11yEvidence.optional(),
   wcag22AAA: AaaEvidence.optional(),
@@ -319,6 +680,23 @@ export const ExternalEvidence = z.object({
   coreWebVitals: CoreWebVitalsEvidence.optional(),
   baseline: BaselineEvidence.optional(),
   reliability: ReliabilityEvidence.optional(),
+  // tier-2
+  jsonLdShacl: JsonLdShaclEvidence.optional(),
+  seoTechnical: SeoTechnicalEvidence.optional(),
+  commonMark: CommonMarkEvidence.optional(),
+  aiReadability: AiReadabilityEvidence.optional(),
+  openApi: OpenApiEvidence.optional(),
+  feeds: FeedsEvidence.optional(),
+  // tier-3
+  slsaProvenance: SlsaProvenanceEvidence.optional(),
+  reproducibleBuild: ReproducibleBuildEvidence.optional(),
+  sbom: SbomEvidence.optional(),
+  contentDigests: ContentDigestsEvidence.optional(),
+  signedReleaseManifest: SignedReleaseManifestEvidence.optional(),
+  ipfsCid: IpfsCidEvidence.optional(),
+  httpRfc9110: HttpRfc9110Evidence.optional(),
+  // cognitive
+  cogaUsability: CogaUsabilityEvidence.optional(),
 });
 
 export type HtmlValidatorEvidenceType = z.infer<typeof HtmlValidatorEvidence>;
@@ -330,6 +708,27 @@ export type CoreWebVitalSampleType = z.infer<typeof CoreWebVitalSample>;
 export type CoreWebVitalsEvidenceType = z.infer<typeof CoreWebVitalsEvidence>;
 export type BaselineEvidenceType = z.infer<typeof BaselineEvidence>;
 export type ReliabilityEvidenceType = z.infer<typeof ReliabilityEvidence>;
+// tier-2
+export type JsonLdShaclEvidenceType = z.infer<typeof JsonLdShaclEvidence>;
+export type SeoTechnicalEvidenceType = z.infer<typeof SeoTechnicalEvidence>;
+export type CommonMarkEvidenceType = z.infer<typeof CommonMarkEvidence>;
+export type AiReadabilityEvidenceType = z.infer<typeof AiReadabilityEvidence>;
+export type OpenApiEvidenceType = z.infer<typeof OpenApiEvidence>;
+export type FeedsEvidenceType = z.infer<typeof FeedsEvidence>;
+// tier-3
+export type SlsaProvenanceEvidenceType = z.infer<typeof SlsaProvenanceEvidence>;
+export type ReproducibleBuildEvidenceType = z.infer<
+  typeof ReproducibleBuildEvidence
+>;
+export type SbomEvidenceType = z.infer<typeof SbomEvidence>;
+export type ContentDigestsEvidenceType = z.infer<typeof ContentDigestsEvidence>;
+export type SignedReleaseManifestEvidenceType = z.infer<
+  typeof SignedReleaseManifestEvidence
+>;
+export type IpfsCidEvidenceType = z.infer<typeof IpfsCidEvidence>;
+export type HttpRfc9110EvidenceType = z.infer<typeof HttpRfc9110Evidence>;
+// cognitive
+export type CogaUsabilityEvidenceType = z.infer<typeof CogaUsabilityEvidence>;
 export type ExternalEvidenceType = z.infer<typeof ExternalEvidence>;
 /** Caller-facing shape: defaulted fields (e.g. ASVS targetLevel) may be omitted. */
 export type ExternalEvidenceInput = z.input<typeof ExternalEvidence>;
