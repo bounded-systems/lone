@@ -452,9 +452,8 @@ export function conformance(
         return {
           ...c,
           status: "not-assessed",
-          detail:
-            "interface-complexity budget (W3C COGA-derived) — DOM validators " +
-            "not yet implemented; reported but non-gating (see TODO in web_build.ts)",
+          detail: `${c.label} is lone-measurable in principle, but its DOM ` +
+            "validators are not yet implemented; reported but non-gating",
           findings: [],
         };
       }
@@ -521,12 +520,14 @@ function buildAreaSummaries(
 function partialSummary(results: CriterionResult[]): string {
   const parts: string[] = [];
 
-  // Only INSTRUMENTED lone criteria speak to "automated DOM checks". A
-  // pending-validators criterion (e.g. the cognitive interface-complexity
-  // budget) is always not-assessed and must not be mistaken for an invalid
-  // subject here.
+  // The headline partial summary speaks only to the COMPACT-CLAIM gate, so its
+  // "automated DOM checks" line is scoped to the tier-1 lone criteria. Recommended,
+  // non-gating lone criteria (e.g. the cognitive interface-complexity budget) and
+  // any pending-validators criterion are reported via `areaSummaries`, not here —
+  // they must never pull down or speak for the tier-1 headline.
   const loneResults = results.filter(
-    (r) => r.evidence === "lone" && !r.pendingValidators,
+    (r) =>
+      r.evidence === "lone" && gatesCompactClaim(r) && !r.pendingValidators,
   );
   const loneNotAssessed = loneResults.some((r) => r.status === "not-assessed");
   const loneUnmet = loneResults.filter((r) => r.status === "unmet");

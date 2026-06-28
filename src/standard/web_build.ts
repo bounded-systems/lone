@@ -470,7 +470,7 @@ export const CRITERIA: readonly Criterion[] = [
   // explicitly NOT a "cognitive-load measurement". Reported + summarised but
   // non-gating until the DOM validators land.
 
-  // ── Cognitive — interface-complexity budget (validators are a follow-on) ──
+  // ── Cognitive — interface-complexity budget (lone-measurable) ─────────────
   {
     id: "cognitive.complexity-budget",
     area: "cognitive",
@@ -479,17 +479,18 @@ export const CRITERIA: readonly Criterion[] = [
     target:
       "Rendered DOM stays within an interface-complexity budget: choice density, " +
       "primary-action count, heading depth, clear link purpose, interruptions, " +
-      "form/memory burden, motion, consistency, progressive disclosure. " +
+      "form/memory burden, motion, progressive disclosure. " +
       "This is an interface-complexity budget, NOT a cognitive-load measurement.",
     level: "budget (recommended)",
     evidence: "lone",
     required: false,
     tier: "cognitive",
-    // TODO: validators — implement the rendered-DOM complexity-budget validators
-    // (choice density, primary-action count, heading depth, clear-link-purpose,
-    // interruptions, form/memory burden, motion, consistency, disclosure) as a
-    // separate follow-on. Until then this criterion is reported as not-assessed.
-    pendingValidators: true,
+    // Fed by `validate/cognitive_budget.ts` (LONE_COGA_* findings). The
+    // budget is measured statically from the DOM subtree; `met` when no
+    // error-severity COGA finding (autoplay / on-load modal), else `unmet`.
+    // It stays recommended (`required: false`) and NEVER widens the tier-1
+    // compact claim. Honest labelling: an interface-complexity budget, NOT a
+    // cognitive-load measurement.
     loneCodes: ["LONE_COGA_"],
   },
   // ── Cognitive — COGA usability testing (manual, like the WCAG audit) ──────

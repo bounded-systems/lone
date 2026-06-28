@@ -241,9 +241,10 @@ Deno.test("ext - recommended AI-readability gap is unmet but never gates", async
   assertEquals(report.conformant, true);
 });
 
-Deno.test("ext - cognitive interface-complexity budget is ALWAYS not-assessed (validators pending)", async () => {
-  // Even on a clean subject it must never report `met`: the DOM validators are a
-  // follow-on, and claiming met on an uninstrumented criterion is overclaim.
+Deno.test("ext - cognitive interface-complexity budget is now ASSESSED (validators landed)", async () => {
+  // The DOM validators now exist, so the budget is measured from the subtree
+  // instead of being reported not-assessed. A clean subject has no LONE_COGA_
+  // findings, so the criterion is `met` (it stays recommended, non-gating).
   const lone = await loneOf(CLEAN_SUBJECT);
   const report = conformance(lone, {
     ...FULL_TIER1_EVIDENCE,
@@ -252,13 +253,46 @@ Deno.test("ext - cognitive interface-complexity budget is ALWAYS not-assessed (v
   const coga = report.results.find((r) =>
     r.id === "cognitive.complexity-budget"
   );
-  assertEquals(coga?.status, "not-assessed");
+  assertEquals(coga?.status, "met");
   assertEquals(coga?.required, false);
   assertEquals(coga?.evidence, "lone");
-  assert(coga?.detail.includes("validators not yet implemented"));
+  // It assesses now — it must not fall back to the pending-validators message.
+  assert(!coga?.detail.includes("not yet implemented"));
+  // Non-gating: it never widens the tier-1 compact claim.
+  assertEquals(report.conformant, true);
+  assertEquals(report.claim, COMPACT_CLAIM);
   // Honest labelling: a budget, NOT a cognitive-load measurement.
   assert(coga?.label.toLowerCase().includes("interface-complexity budget"));
   assert(!coga?.label.toLowerCase().includes("cognitive-load"));
+});
+
+Deno.test("ext - cognitive budget goes UNMET on an error-severity COGA finding (autoplay)", async () => {
+  // An autoplaying <video> is an on-load interruption: an error-severity
+  // LONE_COGA_ finding, which flips the (still non-gating) budget to unmet.
+  const AUTOPLAY_SUBJECT: ElementLike = {
+    tagName: "main",
+    attributes: [],
+    children: [
+      {
+        tagName: "video",
+        attributes: [{ name: "autoplay", value: "" }],
+        children: [],
+      },
+    ],
+  };
+  const lone = await loneOf(AUTOPLAY_SUBJECT);
+  const report = conformance(lone, {
+    ...FULL_TIER1_EVIDENCE,
+    ...FULL_EXTENSION_EVIDENCE,
+  });
+  const coga = report.results.find((r) =>
+    r.id === "cognitive.complexity-budget"
+  );
+  assertEquals(coga?.status, "unmet");
+  // Recommended + non-gating by construction: it is required:false and lives in
+  // the "cognitive" tier, so it never sits on the tier-1 compact-claim gate.
+  assertEquals(coga?.required, false);
+  assertEquals(coga?.tier, "cognitive");
 });
 
 Deno.test("ext - areaSummaries report each area's met/total honestly", async () => {
@@ -277,11 +311,12 @@ Deno.test("ext - areaSummaries report each area's met/total honestly", async () 
     assertEquals(a.met + a.unmet + a.notAssessed, a.total);
     assert(a.summary.startsWith(`${a.area}: `));
   }
-  // Cognitive: the manual COGA test is met, the budget is pending → 1/2 met.
+  // Cognitive: on a clean subject the interface-complexity budget is met and
+  // the manual COGA usability test is met (evidence supplied) → 2/2 met.
   const cognitive = report.areaSummaries.find((a) => a.area === "cognitive");
   assertEquals(cognitive?.total, 2);
-  assertEquals(cognitive?.met, 1);
-  assertEquals(cognitive?.notAssessed, 1);
+  assertEquals(cognitive?.met, 2);
+  assertEquals(cognitive?.notAssessed, 0);
 });
 
 Deno.test("ext - areaSummaries totals reconcile with the overall summary", async () => {
