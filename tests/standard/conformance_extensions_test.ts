@@ -30,8 +30,10 @@ const FULL_TIER1_EVIDENCE: ExternalEvidenceInput = {
     keyboardTested: true,
     screenReaderTested: true,
     completeFlows: true,
+    verifiedBy: "Acme Accessibility Auditors",
   },
-  security: { achievedLevel: 2, knownCriticalOrHighVulns: 0 },
+  asvs: { achievedLevel: 2, verifiedBy: "Acme Security Labs" },
+  vulns: { knownCriticalOrHighVulns: 0 },
   coreWebVitals: [
     {
       formFactor: "mobile",

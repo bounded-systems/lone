@@ -4,6 +4,8 @@ export {
   type AaaEvidenceType,
   AiReadabilityEvidence,
   type AiReadabilityEvidenceType,
+  AsvsEvidence,
+  type AsvsEvidenceType,
   AxeEvidence,
   type AxeEvidenceType,
   BaselineEvidence,
@@ -48,8 +50,6 @@ export {
   type ReproducibleBuildEvidenceType,
   SbomEvidence,
   type SbomEvidenceType,
-  SecurityEvidence,
-  type SecurityEvidenceType,
   SeoTechnicalEvidence,
   type SeoTechnicalEvidenceType,
   SignedReleaseManifestEvidence,
@@ -58,6 +58,8 @@ export {
   type SlsaProvenanceEvidenceType,
   STANDARD_NAME,
   STANDARD_VERSION,
+  VulnsEvidence,
+  type VulnsEvidenceType,
 } from "./web_build.ts";
 
 export {

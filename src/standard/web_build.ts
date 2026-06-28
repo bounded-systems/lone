@@ -518,12 +518,17 @@ export const HtmlValidatorEvidence = z.object({
   warnings: z.number().int().min(0).optional(),
 });
 
-/** Manual WCAG 2.2 AA audit attestation. */
+/**
+ * Manual WCAG 2.2 AA audit attestation. `verifiedBy` (an independent assessor) is
+ * REQUIRED for `a11y.wcag22-aa-manual` to reach `met`; absent it the criterion is
+ * `not-assessed` — a self-attested manual audit never gates the compact claim.
+ */
 export const ManualA11yEvidence = z.object({
   wcag22AA: z.boolean(),
   keyboardTested: z.boolean(),
   screenReaderTested: z.boolean(),
   completeFlows: z.boolean(),
+  verifiedBy: z.string().optional(),
 });
 
 /** Selected WCAG 2.2 AAA attestation. */
@@ -538,14 +543,26 @@ export const AxeEvidence = z.object({
   critical: z.number().int().min(0),
 });
 
-/** OWASP ASVS verification attestation + known-vuln count. */
-export const SecurityEvidence = z.object({
+/**
+ * OWASP ASVS verification attestation — the self-graded part. `verifiedBy` (an
+ * independent assessor) is REQUIRED for `security.asvs` to reach `met`; absent it
+ * the criterion is `not-assessed` (self-attestation never gates the compact claim).
+ */
+export const AsvsEvidence = z.object({
   standard: z.literal("OWASP ASVS").default("OWASP ASVS"),
   version: z.string().default("5.0.0"),
   achievedLevel: z.union([z.literal(1), z.literal(2), z.literal(3)]),
   targetLevel: z.union([z.literal(1), z.literal(2), z.literal(3)]).default(2),
-  knownCriticalOrHighVulns: z.number().int().min(0),
   verifiedBy: z.string().optional(),
+});
+
+/**
+ * Known critical/high vulnerabilities — the TOOL-measured part (e.g. `npm audit`,
+ * OSV). Decoupled from {@link AsvsEvidence} so an objective vuln count can be
+ * supplied WITHOUT also self-grading an ASVS level.
+ */
+export const VulnsEvidence = z.object({
+  knownCriticalOrHighVulns: z.number().int().min(0),
 });
 
 /** One Core Web Vitals sample for a given form factor. */
@@ -677,7 +694,8 @@ export const ExternalEvidence = z.object({
   manualA11y: ManualA11yEvidence.optional(),
   wcag22AAA: AaaEvidence.optional(),
   axe: AxeEvidence.optional(),
-  security: SecurityEvidence.optional(),
+  asvs: AsvsEvidence.optional(),
+  vulns: VulnsEvidence.optional(),
   coreWebVitals: CoreWebVitalsEvidence.optional(),
   baseline: BaselineEvidence.optional(),
   reliability: ReliabilityEvidence.optional(),
@@ -704,7 +722,8 @@ export type HtmlValidatorEvidenceType = z.infer<typeof HtmlValidatorEvidence>;
 export type ManualA11yEvidenceType = z.infer<typeof ManualA11yEvidence>;
 export type AaaEvidenceType = z.infer<typeof AaaEvidence>;
 export type AxeEvidenceType = z.infer<typeof AxeEvidence>;
-export type SecurityEvidenceType = z.infer<typeof SecurityEvidence>;
+export type AsvsEvidenceType = z.infer<typeof AsvsEvidence>;
+export type VulnsEvidenceType = z.infer<typeof VulnsEvidence>;
 export type CoreWebVitalSampleType = z.infer<typeof CoreWebVitalSample>;
 export type CoreWebVitalsEvidenceType = z.infer<typeof CoreWebVitalsEvidence>;
 export type BaselineEvidenceType = z.infer<typeof BaselineEvidence>;
