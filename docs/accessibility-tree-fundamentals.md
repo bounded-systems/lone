@@ -385,8 +385,7 @@ effort:
   contenteditable="true"
   aria-labelledby="username-label"
   aria-required="true"
->
-</div>
+></div>
 <!-- - Role: textbox (explicit) -->
 <!-- - Name: "Username" (from aria-labelledby) -->
 <!-- - State: required (via aria-required) -->
