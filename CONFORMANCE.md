@@ -88,10 +88,10 @@ lone-measurable in principle at the transport layer in future.
 > interruptions, form/memory burden, motion, progressive disclosure), not a
 > person's cognition.
 
-| Area          | Standard           | Target                                                                         | Required    | Evidence  |
-| ------------- | ------------------ | ------------------------------------------------------------------------------ | ----------- | --------- |
-| **Cognitive** | W3C COGA (derived) | Rendered DOM within an interface-complexity budget                             | recommended | **lone**² |
-| **Cognitive** | W3C COGA           | Usability testing with people with cognitive disabilities; critical tasks pass | recommended | external  |
+| Area          | Standard            | Target                                                                         | Required    | Evidence  |
+| ------------- | ------------------- | ------------------------------------------------------------------------------ | ----------- | --------- |
+| **Cognitive** | W3C COGA (derived)³ | Rendered DOM within an interface-complexity budget                             | recommended | **lone**² |
+| **Cognitive** | W3C COGA⁴           | Usability testing with people with cognitive disabilities; critical tasks pass | recommended | external  |
 
 ² **Now lone-measurable** — the rendered-DOM validators landed in **0.4.0**
 (`validate/cognitive_budget.ts`, `LONE_COGA_*`). The budget is scored statically
@@ -100,6 +100,22 @@ finding, `unmet` when there is. The criterion stays **recommended**
 (`required: false`) and **never** widens the tier-1 compact claim. It remains an
 **interface-complexity budget**, explicitly **NOT** a cognitive-load
 measurement.
+
+³ Area anchor: the W3C **Cognitive and Learning Disabilities Accessibility
+(COGA) Task Force** (https://www.w3.org/WAI/about/groups/task-forces/coga/). The
+budget derives from **Making Content Usable for People with Cognitive and
+Learning Disabilities** (W3C Working Group Note,
+https://www.w3.org/TR/coga-usable/): the `LONE_COGA_*` rules operationalize
+specific Making-Content-Usable objectives (clear link purpose and language,
+manageable choice/form burden, no unexpected context changes) as a static DOM
+budget. They do **not** cover the Note's content-authoring and process patterns
+a subtree cannot see — "derived", not "conformant".
+
+⁴ External usability-testing evidence should satisfy **Making Content Usable**
+§"user testing" and **Cognitive Accessibility User Research** (W3C Working
+Draft, https://www.w3.org/TR/coga-user-research/): task-based testing with
+people with cognitive and learning disabilities, critical tasks completed.
+`not-assessed` until supplied — self-asserted "we tested it" does not gate.
 
 #### Interface-complexity budget rules (`LONE_COGA_*`)
 
