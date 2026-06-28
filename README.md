@@ -106,6 +106,28 @@ export function bless<T extends Element>(
   rule breadth to existing tools and owns the _boundary_.
 - ❌ Not a DOM-mutation or custom-elements requirement.
 
+## Web-build conformance standard
+
+Lone is also the typed home for **"what it means for a web build to conform, and
+whether we can claim it."** `conformance(lone, evidence)` folds lone's static
+DOM findings together with supplied external evidence (security, Core Web
+Vitals, Baseline, manual a11y, reliability) into a typed report — and emits the
+strong compact claim **only** when every gating criterion has passing evidence.
+Anything less is an honest partial summary. It can't overclaim by construction.
+
+```ts
+import { conformance } from "@bounded-systems/lone";
+
+const lone = await validate(rootEl);
+const report = conformance(lone, externalEvidence);
+report.claim; // compact claim string, or an honest partial summary
+```
+
+See **[CONFORMANCE.md](./CONFORMANCE.md)** for the full standard, the
+lone-measurable vs external evidence split, claim-gating, and the honest-
+reporting rule (a Lighthouse/axe pass is a regression signal, **not**
+conformance). New in **0.2.0** (additive; opt-in for `^0.1` consumers).
+
 ## Develop
 
 ```sh
