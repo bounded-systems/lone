@@ -62,14 +62,17 @@ Deno.test("standard - external criteria carry no lone codes", () => {
   }
 });
 
-Deno.test("standard - AAA is the only non-gating tier-1 criterion", () => {
-  // Within tier-1 (the compact-claim gate), AAA remains the sole recommended
-  // (non-gating) criterion. Tier-2/tier-3/cognitive criteria are excluded here
-  // because they never gate the compact claim regardless of their `required`.
+Deno.test("standard - tier-1 non-gating criteria are the recommended set", () => {
+  // Within tier-1 (the compact-claim gate), the recommended (non-gating) criteria
+  // are selected-AAA plus the HSTS-preload external grader. Tier-2/tier-3/cognitive
+  // criteria are excluded here because they never gate regardless of `required`.
   const nonGating = CRITERIA
     .filter((c) => (c.tier ?? 1) === 1 && !c.required)
     .map((c) => c.id);
-  assertEquals(nonGating, ["a11y.wcag22-aaa-selected"]);
+  assertEquals(nonGating, [
+    "a11y.wcag22-aaa-selected",
+    "security.hsts-preload",
+  ]);
 });
 
 Deno.test("standard - only tier-1 required criteria gate the compact claim", () => {

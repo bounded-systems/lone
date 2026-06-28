@@ -250,6 +250,19 @@ export const CRITERIA: readonly Criterion[] = [
     evidence: "external",
     required: true,
   },
+  {
+    // External grader — Chromium-maintained HSTS preload list. Independent by
+    // construction, so it needs no `verifiedBy`. Recommended (non-gating).
+    id: "security.hsts-preload",
+    area: "security",
+    label: "HSTS preload",
+    standard: "RFC 6797 / hstspreload.org",
+    target:
+      "Origin is on the HSTS preload list (HTTPS enforced before first byte).",
+    level: "preloaded",
+    evidence: "external",
+    required: false,
+  },
 
   // ── Performance — Core Web Vitals ────────────────────────────────────────
   {
@@ -464,6 +477,33 @@ export const CRITERIA: readonly Criterion[] = [
     required: false,
     tier: 3,
   },
+  // ── Integrity — external graders (independent by construction) ────────────
+  {
+    // OpenSSF Scorecard — an automated third-party grader of repository security
+    // posture (0–10). Independent, so no `verifiedBy`. Recommended (non-gating).
+    id: "integrity.scorecard",
+    area: "integrity",
+    label: "OpenSSF Scorecard",
+    standard: "OpenSSF Scorecard",
+    target: "Repository scores ≥ 7.0 on the OpenSSF Scorecard.",
+    level: "score ≥ 7.0",
+    evidence: "external",
+    required: false,
+    tier: 3,
+  },
+  {
+    // SLSA build LEVEL achieved (distinct from `integrity.slsa-provenance`, which
+    // only checks provenance is present/signed/verified). Recommended (non-gating).
+    id: "integrity.slsa-level",
+    area: "integrity",
+    label: "SLSA build level",
+    standard: "SLSA",
+    target: "Build achieves the targeted SLSA build level (default L3).",
+    level: "≥ target (default L3)",
+    evidence: "external",
+    required: false,
+    tier: 3,
+  },
 
   // ══ COGNITIVE ACCESSIBILITY — W3C COGA (NEW AREA) ══════════════════════════
   // HONEST LABELING: this is an INTERFACE-COMPLEXITY BUDGET (W3C COGA-derived),
@@ -565,6 +605,14 @@ export const VulnsEvidence = z.object({
   knownCriticalOrHighVulns: z.number().int().min(0),
 });
 
+/**
+ * HSTS preload — external grader (the Chromium-maintained preload list). Met when
+ * the origin is preloaded. Independent by construction; no `verifiedBy` needed.
+ */
+export const HstsPreloadEvidence = z.object({
+  preloaded: z.boolean(),
+});
+
 /** One Core Web Vitals sample for a given form factor. */
 export const CoreWebVitalSample = z.object({
   formFactor: z.enum(["mobile", "desktop"]),
@@ -640,6 +688,23 @@ export const SlsaProvenanceEvidence = z.object({
   verified: z.boolean(),
 });
 
+/**
+ * SLSA build LEVEL achieved (distinct from {@link SlsaProvenanceEvidence}). Met
+ * when `level ≥ target` (target defaults to L3). External grader; no `verifiedBy`.
+ */
+export const SlsaLevelEvidence = z.object({
+  level: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]),
+  target: z.union([z.literal(1), z.literal(2), z.literal(3)]).default(3),
+});
+
+/**
+ * OpenSSF Scorecard — automated third-party grader of repo security posture
+ * (score 0–10). Met when `score ≥ 7.0`. External grader; no `verifiedBy`.
+ */
+export const ScorecardEvidence = z.object({
+  score: z.number().min(0).max(10),
+});
+
 /** Reproducible-build result. */
 export const ReproducibleBuildEvidence = z.object({
   reproducible: z.boolean(),
@@ -696,6 +761,7 @@ export const ExternalEvidence = z.object({
   axe: AxeEvidence.optional(),
   asvs: AsvsEvidence.optional(),
   vulns: VulnsEvidence.optional(),
+  hstsPreload: HstsPreloadEvidence.optional(),
   coreWebVitals: CoreWebVitalsEvidence.optional(),
   baseline: BaselineEvidence.optional(),
   reliability: ReliabilityEvidence.optional(),
@@ -708,6 +774,8 @@ export const ExternalEvidence = z.object({
   feeds: FeedsEvidence.optional(),
   // tier-3
   slsaProvenance: SlsaProvenanceEvidence.optional(),
+  slsaLevel: SlsaLevelEvidence.optional(),
+  scorecard: ScorecardEvidence.optional(),
   reproducibleBuild: ReproducibleBuildEvidence.optional(),
   sbom: SbomEvidence.optional(),
   contentDigests: ContentDigestsEvidence.optional(),
@@ -724,6 +792,7 @@ export type AaaEvidenceType = z.infer<typeof AaaEvidence>;
 export type AxeEvidenceType = z.infer<typeof AxeEvidence>;
 export type AsvsEvidenceType = z.infer<typeof AsvsEvidence>;
 export type VulnsEvidenceType = z.infer<typeof VulnsEvidence>;
+export type HstsPreloadEvidenceType = z.infer<typeof HstsPreloadEvidence>;
 export type CoreWebVitalSampleType = z.infer<typeof CoreWebVitalSample>;
 export type CoreWebVitalsEvidenceType = z.infer<typeof CoreWebVitalsEvidence>;
 export type BaselineEvidenceType = z.infer<typeof BaselineEvidence>;
@@ -737,6 +806,8 @@ export type OpenApiEvidenceType = z.infer<typeof OpenApiEvidence>;
 export type FeedsEvidenceType = z.infer<typeof FeedsEvidence>;
 // tier-3
 export type SlsaProvenanceEvidenceType = z.infer<typeof SlsaProvenanceEvidence>;
+export type SlsaLevelEvidenceType = z.infer<typeof SlsaLevelEvidence>;
+export type ScorecardEvidenceType = z.infer<typeof ScorecardEvidence>;
 export type ReproducibleBuildEvidenceType = z.infer<
   typeof ReproducibleBuildEvidence
 >;

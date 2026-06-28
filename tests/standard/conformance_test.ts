@@ -311,3 +311,84 @@ Deno.test("conformance - report summary counts add up to total criteria", async 
   assertEquals(met + unmet + notAssessed, total);
   assertEquals(total, report.results.length);
 });
+
+// ── External-grader cells (Scorecard / HSTS preload / SLSA level) ────────────
+// Independent third-party grades: assessable on their own, no `verifiedBy`, and
+// recommended (non-gating) so they never widen the compact claim.
+
+const statusOf = (report: { results: { id: string; status: string }[] }) =>
+  Object.fromEntries(report.results.map((r) => [r.id, r.status]));
+
+Deno.test("conformance - external graders default to not-assessed when absent", async () => {
+  const lone = await loneOf(CLEAN_SUBJECT);
+  const s = statusOf(conformance(lone, {}));
+  assertEquals(s["security.hsts-preload"], "not-assessed");
+  assertEquals(s["integrity.scorecard"], "not-assessed");
+  assertEquals(s["integrity.slsa-level"], "not-assessed");
+});
+
+Deno.test("conformance - HSTS preload is met when preloaded, unmet otherwise", async () => {
+  const lone = await loneOf(CLEAN_SUBJECT);
+  assertEquals(
+    statusOf(conformance(lone, { hstsPreload: { preloaded: true } }))[
+      "security.hsts-preload"
+    ],
+    "met",
+  );
+  assertEquals(
+    statusOf(conformance(lone, { hstsPreload: { preloaded: false } }))[
+      "security.hsts-preload"
+    ],
+    "unmet",
+  );
+});
+
+Deno.test("conformance - Scorecard met at ≥ 7.0, unmet below", async () => {
+  const lone = await loneOf(CLEAN_SUBJECT);
+  assertEquals(
+    statusOf(conformance(lone, { scorecard: { score: 7.0 } }))[
+      "integrity.scorecard"
+    ],
+    "met",
+  );
+  assertEquals(
+    statusOf(conformance(lone, { scorecard: { score: 6.9 } }))[
+      "integrity.scorecard"
+    ],
+    "unmet",
+  );
+});
+
+Deno.test("conformance - SLSA level honors the target (default L3)", async () => {
+  const lone = await loneOf(CLEAN_SUBJECT);
+  assertEquals(
+    statusOf(conformance(lone, { slsaLevel: { level: 3 } }))[
+      "integrity.slsa-level"
+    ],
+    "met",
+  ); // target defaults to L3
+  assertEquals(
+    statusOf(conformance(lone, { slsaLevel: { level: 2 } }))[
+      "integrity.slsa-level"
+    ],
+    "unmet",
+  );
+  assertEquals(
+    statusOf(conformance(lone, { slsaLevel: { level: 2, target: 2 } }))[
+      "integrity.slsa-level"
+    ],
+    "met",
+  );
+});
+
+Deno.test("conformance - external graders are recommended, never gating", async () => {
+  const lone = await loneOf(CLEAN_SUBJECT);
+  // All three failing must NOT flip a conformant report (they are non-gating).
+  const report = conformance(lone, {
+    ...FULL_EVIDENCE,
+    hstsPreload: { preloaded: false },
+    scorecard: { score: 0 },
+    slsaLevel: { level: 0 },
+  });
+  assertEquals(report.conformant, true);
+});
