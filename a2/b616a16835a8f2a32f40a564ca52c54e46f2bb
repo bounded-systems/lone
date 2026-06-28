@@ -1,0 +1,21 @@
+CONFORMANCE.md
+  s_0e0b4d6cd22542::t_07471e7c9e1c26 91-92,115-118
+  s_0e0b4d6cd22542::t_0cbb4ccaef9913 93-94
+  s_0e0b4d6cd22542::t_11e71394fa1d8a 104-114,119
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "a2b616a16835a8f2a32f40a564ca52c54e46f2bb",
+  "prompts": {},
+  "sessions": {
+    "s_0e0b4d6cd22542": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "25ca02d8-0ea9-405f-8441-40cf7bf0ee57",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Robert DeLanghe <1240090+bdelanghe@users.noreply.github.com>"
+    }
+  }
+}
