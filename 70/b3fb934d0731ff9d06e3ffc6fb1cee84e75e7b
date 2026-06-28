@@ -1,0 +1,46 @@
+tests/standard/web_build_test.ts
+  s_98e316d0b3248a::t_9010d60433f79c 1-79
+README.md
+  s_98e316d0b3248a::t_6cedac0fe79022 109-130
+tests/standard/conformance_test.ts
+  s_98e316d0b3248a::t_781895398929ba 1-215
+  s_98e316d0b3248a::t_2e869dcc02a2ef 216-267
+src/standard/mod.ts
+  s_98e316d0b3248a::t_cd98fbf35a7a35 1-18,20-40
+  s_98e316d0b3248a::t_db912ef37f5b31 19
+  s_98e316d0b3248a::t_9577e1d46126f0 41
+src/mod.ts
+  s_98e316d0b3248a::t_e196e3971a11c8 7
+src/standard/conformance.ts
+  s_98e316d0b3248a::t_a9a2b1b16f22dc 246
+  s_98e316d0b3248a::t_2934ac15775a00 16
+  s_98e316d0b3248a::t_61abef96a0f701 1-15,17-245,247-310
+  s_98e316d0b3248a::t_754d70cc303606 311-314
+src/standard/web_build.ts
+  s_98e316d0b3248a::t_119480f76122af 1-76,78-333
+  s_98e316d0b3248a::t_8d3879a7976f0f 334-335
+  s_98e316d0b3248a::t_075a41eec1ca1c 77
+CONFORMANCE.md
+  s_98e316d0b3248a::t_0e606e218e489b 1-159
+  s_98e316d0b3248a::t_ed45fc89b269d6 160-177
+deno.jsonc
+  s_98e316d0b3248a::t_54b16e85b84917 3
+docs/accessibility-tree-fundamentals.md
+  s_98e316d0b3248a::t_bc0da694d8f6d9 388
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "70b3fb934d0731ff9d06e3ffc6fb1cee84e75e7b",
+  "prompts": {},
+  "sessions": {
+    "s_98e316d0b3248a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8db980ee-eb6b-4866-832b-f795cef7f33c",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Robert DeLanghe <1240090+bdelanghe@users.noreply.github.com>"
+    }
+  }
+}
