@@ -1,0 +1,25 @@
+src/engine/digest.ts
+  s_a96a0778896457::t_d892fac33e537d 124-127,149-153
+  s_a96a0778896457::t_042702039ea1f5 1-123,128-148,154
+tests/engine/digest_test.ts
+  s_a96a0778896457::t_d892fac33e537d 1-6
+  s_a96a0778896457::t_042702039ea1f5 7-141
+src/engine/mod.ts
+  s_a96a0778896457::t_042702039ea1f5 16-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "1fdc9dd93fbf5fcbeadf8834f45e9ef39bb380bb",
+  "prompts": {},
+  "sessions": {
+    "s_a96a0778896457": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5017cc0b-421b-4314-b3a8-5ea45503231a",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Robert DeLanghe <1240090+bdelanghe@users.noreply.github.com>"
+    }
+  }
+}
