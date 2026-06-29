@@ -13,6 +13,13 @@ import { validateReaderView } from "../validate/reader_view.ts";
 import { validateCognitiveBudget } from "../validate/cognitive_budget.ts";
 
 export { unfoldElement, unfoldNode, type UnfoldResult } from "./unfold.ts";
+export {
+  DIGEST_VERSION,
+  type DigestedNode,
+  digestNode,
+  type NodeDigest,
+  withDigests,
+} from "./digest.ts";
 
 export type Element = typeof globalThis extends { Element: infer E } ? E
   : unknown;
