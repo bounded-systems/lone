@@ -381,6 +381,59 @@ Deno.test("conformance - SLSA level honors the target (default L3)", async () =>
   );
 });
 
+Deno.test("conformance - design-token criteria: not-assessed absent, met all-true, unmet on any gap", async () => {
+  const lone = await loneOf(CLEAN_SUBJECT);
+  // Absent evidence → not-assessed (lone never guesses the token system is clean).
+  assertEquals(
+    statusOf(conformance(lone, {}))["design.palette-contrast"],
+    "not-assessed",
+  );
+  // Every flag true → met.
+  const allGood = conformance(lone, {
+    palette: { cvdSafe: true, apcaBaseline: true, nonTextContrast: true },
+    typography: {
+      bodyLineHeight: true,
+      textSpacingAchievable: true,
+      minFontSize: true,
+      weightLegibility: true,
+    },
+    targetSize: { minSizeAA: true },
+    opacityContrast: { effectiveContrast: true },
+    tokenLikeness: { distinctCategoricals: true, noRedundantTokens: true },
+  });
+  for (
+    const id of [
+      "design.palette-contrast",
+      "design.typography",
+      "design.target-size",
+      "design.opacity-contrast",
+      "design.token-likeness",
+    ]
+  ) {
+    assertEquals(statusOf(allGood)[id], "met");
+  }
+  // Any single failing flag → unmet for that criterion.
+  assertEquals(
+    statusOf(
+      conformance(lone, {
+        palette: { cvdSafe: true, apcaBaseline: false, nonTextContrast: true },
+      }),
+    )["design.palette-contrast"],
+    "unmet",
+  );
+  assertEquals(
+    statusOf(conformance(lone, { targetSize: { minSizeAA: false } }))[
+      "design.target-size"
+    ],
+    "unmet",
+  );
+  // Recommended (tier-2): a failing design criterion must NOT flip conformant.
+  assertEquals(
+    conformance(lone, { targetSize: { minSizeAA: false } }).conformant,
+    conformance(lone, {}).conformant,
+  );
+});
+
 Deno.test("conformance - external graders are recommended, never gating", async () => {
   const lone = await loneOf(CLEAN_SUBJECT);
   // All three failing must NOT flip a conformant report (they are non-gating).

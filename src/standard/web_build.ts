@@ -36,6 +36,7 @@ import { z } from "zod";
 export type ConformanceArea =
   | "html"
   | "accessibility"
+  | "design"
   | "security"
   | "performance"
   | "compatibility"
@@ -227,6 +228,70 @@ export const CRITERIA: readonly Criterion[] = [
     level: "AAA (selected)",
     evidence: "external",
     required: false,
+  },
+
+  // ── Design tokens — WCAG over the design system, at the source ────────────
+  // Proven over the token set BEFORE pages compose it (recommended, tier-2 —
+  // reported, never widens the compact claim).
+  {
+    id: "design.palette-contrast",
+    area: "design",
+    label: "Palette contrast (design tokens)",
+    standard: "WCAG 2.2 + APCA",
+    target:
+      "Color-token pairings are CVD-safe, meet an APCA Lc baseline, and satisfy non-text contrast.",
+    level: "AA (token-level)",
+    evidence: "external",
+    required: false,
+    tier: 2,
+  },
+  {
+    id: "design.typography",
+    area: "design",
+    label: "Typography tokens",
+    standard: "WCAG 2.2",
+    target:
+      "Type tokens give body line-height ≥ 1.5, achievable text spacing (1.4.12), a minimum font size, and legible weights.",
+    level: "AA (token-level)",
+    evidence: "external",
+    required: false,
+    tier: 2,
+  },
+  {
+    id: "design.target-size",
+    area: "design",
+    label: "Target size (interactive tokens)",
+    standard: "WCAG 2.2",
+    target:
+      "Interactive size tokens meet the SC 2.5.8 minimum target size (AA).",
+    level: "AA (token-level)",
+    evidence: "external",
+    required: false,
+    tier: 2,
+  },
+  {
+    id: "design.opacity-contrast",
+    area: "design",
+    label: "Effective contrast under opacity",
+    standard: "WCAG 2.2",
+    target:
+      "Token opacity composited over its backdrop still meets SC 1.4.3/1.4.11 contrast.",
+    level: "AA (token-level)",
+    evidence: "external",
+    required: false,
+    tier: 2,
+  },
+  {
+    id: "design.token-likeness",
+    area: "design",
+    label: "Token likeness hygiene",
+    standard: "Design-system hygiene",
+    target:
+      "Categorical tokens are perceptibly distinct and no near-duplicate (redundant) tokens collapse the system.",
+    level: "recommended",
+    evidence: "external",
+    required: false,
+    tier: 2,
   },
 
   // ── Security — OWASP ASVS 5.0.0 ──────────────────────────────────────────
@@ -752,6 +817,43 @@ export const CogaUsabilityEvidence = z.object({
   criticalTasksPassed: z.boolean(),
 });
 
+// ── Design-token accessibility external evidence (WCAG over the token system) ─
+// These prove the DESIGN SYSTEM's tokens meet accessibility bars at the source —
+// before any page composes them — rather than catching violations per-page. Tool-
+// measured over a DTCG token set (e.g. the conformance-kit token-a11y suite); no
+// `verifiedBy` needed. Recommended (tier-2), so they never widen the compact claim.
+
+/** Palette contrast over color tokens — WCAG 2.2 SC 1.4.3/1.4.11 + APCA + CVD. */
+export const PaletteEvidence = z.object({
+  cvdSafe: z.boolean(),
+  apcaBaseline: z.boolean(),
+  nonTextContrast: z.boolean(),
+});
+
+/** Typography tokens — WCAG 2.2 SC 1.4.4 / 1.4.8 / 1.4.12. */
+export const TypographyEvidence = z.object({
+  bodyLineHeight: z.boolean(),
+  textSpacingAchievable: z.boolean(),
+  minFontSize: z.boolean(),
+  weightLegibility: z.boolean(),
+});
+
+/** Target size over interactive tokens — WCAG 2.2 SC 2.5.8 (AA). */
+export const TargetSizeEvidence = z.object({
+  minSizeAA: z.boolean(),
+});
+
+/** Effective contrast with token opacity composited — WCAG 2.2 SC 1.4.3/1.4.11. */
+export const OpacityContrastEvidence = z.object({
+  effectiveContrast: z.boolean(),
+});
+
+/** Token-likeness hygiene — categorical tokens are distinguishable; no redundant near-duplicates. */
+export const TokenLikenessEvidence = z.object({
+  distinctCategoricals: z.boolean(),
+  noRedundantTokens: z.boolean(),
+});
+
 /** The full external-evidence envelope. Every field is optional. */
 export const ExternalEvidence = z.object({
   // tier-1
@@ -784,6 +886,12 @@ export const ExternalEvidence = z.object({
   httpRfc9110: HttpRfc9110Evidence.optional(),
   // cognitive
   cogaUsability: CogaUsabilityEvidence.optional(),
+  // design-token accessibility
+  palette: PaletteEvidence.optional(),
+  typography: TypographyEvidence.optional(),
+  targetSize: TargetSizeEvidence.optional(),
+  opacityContrast: OpacityContrastEvidence.optional(),
+  tokenLikeness: TokenLikenessEvidence.optional(),
 });
 
 export type HtmlValidatorEvidenceType = z.infer<typeof HtmlValidatorEvidence>;
@@ -820,6 +928,14 @@ export type IpfsCidEvidenceType = z.infer<typeof IpfsCidEvidence>;
 export type HttpRfc9110EvidenceType = z.infer<typeof HttpRfc9110Evidence>;
 // cognitive
 export type CogaUsabilityEvidenceType = z.infer<typeof CogaUsabilityEvidence>;
+// design-token accessibility
+export type PaletteEvidenceType = z.infer<typeof PaletteEvidence>;
+export type TypographyEvidenceType = z.infer<typeof TypographyEvidence>;
+export type TargetSizeEvidenceType = z.infer<typeof TargetSizeEvidence>;
+export type OpacityContrastEvidenceType = z.infer<
+  typeof OpacityContrastEvidence
+>;
+export type TokenLikenessEvidenceType = z.infer<typeof TokenLikenessEvidence>;
 export type ExternalEvidenceType = z.infer<typeof ExternalEvidence>;
 /** Caller-facing shape: defaulted fields (e.g. ASVS targetLevel) may be omitted. */
 export type ExternalEvidenceInput = z.input<typeof ExternalEvidence>;
