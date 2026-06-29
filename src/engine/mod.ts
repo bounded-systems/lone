@@ -1,6 +1,10 @@
 import type { FindingType } from "../contracts/finding.ts";
 import { sortFindings } from "../contracts/finding.ts";
 import type { SemanticNodeType } from "../contracts/semantic_node.ts";
+import { Graph } from "../contracts/graph_node.ts";
+import { Ontology } from "../contracts/ontology.ts";
+import { validateGraphIntegrity } from "../validate/graph_integrity.ts";
+import { validateOntology } from "../validate/graph_ontology.ts";
 import { domToSemanticNode } from "../adapters/dom.ts";
 import { validateSemanticHTML } from "../validate/semantic_html.ts";
 import { validateNameRequired } from "../validate/nameable.ts";
@@ -67,6 +71,52 @@ export async function validate<T extends Element>(
   findings.push(...validateColorContrast(root));
   findings.push(...validateReaderView(root));
   findings.push(...validateCognitiveBudget(root));
+
+  return { findings: sortFindings(findings) };
+}
+
+// Validate a graph (lone's non-DOM input) for structural soundness — distinct
+// identities, resolvable references, reachability. Parses the input against the
+// Graph contract first; a shape that isn't a graph yields a single
+// LONE_GRAPH_INVALID_INPUT finding. Mirrors validate() for the DOM path.
+// When an ontology is supplied it is parsed and the typed-conformance family is
+// run after the structural one (structure first, then type). A malformed
+// ontology yields a single LONE_ONTOLOGY_INVALID_INPUT and the structural
+// findings still stand.
+// deno-lint-ignore require-await -- async public API, mirrors validate(); validators may become async
+export async function validateGraph(
+  input: unknown,
+  ontology?: unknown,
+): Promise<{ findings: FindingType[] }> {
+  const parsed = Graph.safeParse(input);
+  if (!parsed.success) {
+    return {
+      findings: [{
+        code: "LONE_GRAPH_INVALID_INPUT",
+        path: "$",
+        message: `Input is not a valid graph: ${parsed.error.issues[0].message}`
+          .slice(0, 1000),
+        severity: "error",
+      }],
+    };
+  }
+
+  const findings: FindingType[] = [...validateGraphIntegrity(parsed.data)];
+
+  if (ontology !== undefined) {
+    const ont = Ontology.safeParse(ontology);
+    if (!ont.success) {
+      findings.push({
+        code: "LONE_ONTOLOGY_INVALID_INPUT",
+        path: "$",
+        message: `Ontology is not valid: ${ont.error.issues[0].message}`
+          .slice(0, 1000),
+        severity: "error",
+      });
+    } else {
+      findings.push(...validateOntology(parsed.data, ont.data));
+    }
+  }
 
   return { findings: sortFindings(findings) };
 }

@@ -13,6 +13,13 @@ export { validateColorContrast } from "./color_contrast.ts";
 export { validateTextAlternatives } from "./text_alternatives.ts";
 export { validateReaderView } from "./reader_view.ts";
 export {
+  validateGraphIntegrity,
+  validateNoDanglingRef,
+  validateNoDuplicateId,
+  validateNoOrphan,
+} from "./graph_integrity.ts";
+export { validateOntology } from "./graph_ontology.ts";
+export {
   CHOICE_DENSITY_MAX,
   COMPETING_PRIMARY_ACTIONS_MAX,
   CONTENT_DENSITY_MAX_WORDS,
