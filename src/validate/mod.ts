@@ -18,6 +18,7 @@ export {
   validateNoDuplicateId,
   validateNoOrphan,
 } from "./graph_integrity.ts";
+export { validateOntology } from "./graph_ontology.ts";
 export {
   CHOICE_DENSITY_MAX,
   COMPETING_PRIMARY_ACTIONS_MAX,

@@ -17,3 +17,4 @@ export {
   type GraphNodeType,
   type GraphType,
 } from "./graph_node.ts";
+export { Ontology, type OntologyType } from "./ontology.ts";
