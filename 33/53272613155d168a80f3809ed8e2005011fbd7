@@ -1,0 +1,30 @@
+src/standard/conformance.ts
+  s_71a0aecf45d82c::t_0efc6c3857f8fd 157-208
+src/standard/web_build.ts
+  s_71a0aecf45d82c::t_b927ac850bc6ad 820-849,854,894
+  s_71a0aecf45d82c::t_62ce9cad4554a1 889-893
+  s_71a0aecf45d82c::t_1e67bb8973b2fc 931-934
+  s_71a0aecf45d82c::t_3cdf07764051a6 233-295
+  s_71a0aecf45d82c::t_ea05cc035448f9 39
+  s_71a0aecf45d82c::t_59f32005465cf6 296,850-853,855-856,935-938
+tests/standard/conformance_test.ts
+  s_71a0aecf45d82c::t_4fa8f5ef7932cb 384-436
+deno.jsonc
+  s_71a0aecf45d82c::t_71bbb7e13c4a4e 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "3353272613155d168a80f3809ed8e2005011fbd7",
+  "prompts": {},
+  "sessions": {
+    "s_71a0aecf45d82c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f6f6e806-c9db-459c-ba56-79aa27861998",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Robert DeLanghe <1240090+bdelanghe@users.noreply.github.com>"
+    }
+  }
+}
