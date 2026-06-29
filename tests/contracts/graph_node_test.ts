@@ -16,7 +16,9 @@ Deno.test("GraphNode - keeps an optional type for the ontology layer", () => {
 });
 
 Deno.test("Graph - defaults roots and accepts a node list", () => {
-  const parsed = Graph.parse({ nodes: [{ id: "a", refs: ["b"] }, { id: "b" }] });
+  const parsed = Graph.parse({
+    nodes: [{ id: "a", refs: ["b"] }, { id: "b" }],
+  });
   assertEquals(parsed.roots, []);
   assertEquals(parsed.nodes.length, 2);
 });
