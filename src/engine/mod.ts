@@ -1,6 +1,8 @@
 import type { FindingType } from "../contracts/finding.ts";
 import { sortFindings } from "../contracts/finding.ts";
 import type { SemanticNodeType } from "../contracts/semantic_node.ts";
+import { Graph } from "../contracts/graph_node.ts";
+import { validateGraphIntegrity } from "../validate/graph_integrity.ts";
 import { domToSemanticNode } from "../adapters/dom.ts";
 import { validateSemanticHTML } from "../validate/semantic_html.ts";
 import { validateNameRequired } from "../validate/nameable.ts";
@@ -69,6 +71,29 @@ export async function validate<T extends Element>(
   findings.push(...validateCognitiveBudget(root));
 
   return { findings: sortFindings(findings) };
+}
+
+// Validate a graph (lone's non-DOM input) for structural soundness — distinct
+// identities, resolvable references, reachability. Parses the input against the
+// Graph contract first; a shape that isn't a graph yields a single
+// LONE_GRAPH_INVALID_INPUT finding. Mirrors validate() for the DOM path.
+// deno-lint-ignore require-await -- async public API, mirrors validate(); validators may become async
+export async function validateGraph(
+  input: unknown,
+): Promise<{ findings: FindingType[] }> {
+  const parsed = Graph.safeParse(input);
+  if (!parsed.success) {
+    return {
+      findings: [{
+        code: "LONE_GRAPH_INVALID_INPUT",
+        path: "$",
+        message: `Input is not a valid graph: ${parsed.error.issues[0].message}`
+          .slice(0, 1000),
+        severity: "error",
+      }],
+    };
+  }
+  return { findings: sortFindings(validateGraphIntegrity(parsed.data)) };
 }
 
 export async function bless<T extends Element>(
