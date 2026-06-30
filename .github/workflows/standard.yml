@@ -1,0 +1,15 @@
+name: standard
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  standard:
+    uses: bounded-systems/.github/.github/workflows/repo-standard.yml@a5ba3bfe972040261e0fa425e460f22708d8326f
+    with:
+      security: true
+      test: true
+      runtime: deno
+      test-command: "deno task ci"
