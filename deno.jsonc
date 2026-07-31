@@ -3,6 +3,20 @@
   "version": "0.7.0",
   "license": "MIT",
   "exports": "./src/mod.ts",
+  // Node metadata for the org knowledge graph (bounded-systems/.github-private
+  // → registry/). `facet`/`role`/`domain` are the label gate: without them
+  // `registry/generate.ts --check` reports this package as unlabeled. The values
+  // match the reviewed seed entry in registry/seed.json; authoring them here is
+  // what moves the node from "seeded" to "labeled". Schema:
+  // registry/bounded-metadata.schema.json.
+  "bounded": {
+    "tagline": "Bless untrusted DOM subtrees into typed Blessed<T> values or structured Finding[] — a verification boundary for semantic safety",
+    "kind": "door",
+    "facet": "verb",
+    "role": "runtime",
+    "domain": "validation/dom",
+    "contract": "./src/mod.ts"
+  },
   "imports": {
     "zod": "npm:zod@3",
     "linkedom": "npm:linkedom@0.15.3",
