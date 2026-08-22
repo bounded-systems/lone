@@ -12,23 +12,44 @@ export function validateTextAlternatives(
     const role = node.role;
 
     if (isImageNode(node)) {
-      const altProvided = Object.prototype.hasOwnProperty.call(props, "alt");
-      const alt = getStringProp(props, "alt");
       const isDecorative = props.decorative === true ||
         role === "presentation" || role === "none";
+      // An image needs a NAME, and `alt` is only one way to carry one. It is a
+      // content attribute of <img>/<area>/<input type=image> and exists nowhere
+      // else, so demanding it of everything role="img" made that arm
+      // unsatisfiable: the specified way to name a <div role="img"> is
+      // aria-label/aria-labelledby, and the only ways out were invalid HTML, a
+      // role="presentation" that discards the name, or dropping the role. Same
+      // check the svg arm below already uses.
+      const named = hasAccessibleLabel(node, props);
 
-      if (!altProvided && !isDecorative) {
+      if (node.type === "img") {
+        // <img> keeps the stricter reading: alt="" is the documented way to say
+        // "decorative", so an empty alt on an otherwise-unnamed image is still
+        // the distinct EMPTY_ALT_MEANINGFUL finding rather than a missing one.
+        const altProvided = Object.prototype.hasOwnProperty.call(props, "alt");
+        const alt = getStringProp(props, "alt");
+
+        if (!altProvided && !isDecorative && !named) {
+          findings.push({
+            code: "LONE_TEXT_MISSING_ALT",
+            path: currentPath,
+            message: "Image elements must provide alt text.",
+            severity: "error",
+          });
+        } else if (alt === "" && !isDecorative && !named) {
+          findings.push({
+            code: "LONE_TEXT_EMPTY_ALT_MEANINGFUL",
+            path: currentPath,
+            message: "Meaningful images must not use empty alt text.",
+            severity: "error",
+          });
+        }
+      } else if (!isDecorative && !named) {
         findings.push({
           code: "LONE_TEXT_MISSING_ALT",
           path: currentPath,
           message: "Image elements must provide alt text.",
-          severity: "error",
-        });
-      } else if (alt === "" && !isDecorative) {
-        findings.push({
-          code: "LONE_TEXT_EMPTY_ALT_MEANINGFUL",
-          path: currentPath,
-          message: "Meaningful images must not use empty alt text.",
           severity: "error",
         });
       }
