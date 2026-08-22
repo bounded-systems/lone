@@ -147,3 +147,84 @@ Deno.test("validateTextAlternatives - passes media with transcript", () => {
 
   assertEquals(findings.length, 0);
 });
+
+// ── role="img" is named by ARIA, not by an alt attribute (#33) ────────────────
+// `alt` is a content attribute of <img>/<area>/<input type=image> and exists on
+// nothing else, so requiring it of every role="img" made the rule unsatisfiable
+// for its own primary case — a graphic composed of other elements. Reported from
+// a real consumer: a segmented progress bar, correctly named with aria-label,
+// flagged LONE_TEXT_MISSING_ALT with no legal way to satisfy it.
+
+Deno.test("validateTextAlternatives - passes role=img named by aria-label", () => {
+  const node: SemanticNodeType = {
+    type: "div",
+    role: "img",
+    name: "22 met, 1 unmet, 14 not assessed of 37",
+    props: { "aria-label": "22 met, 1 unmet, 14 not assessed of 37" },
+    children: [],
+  };
+
+  assertEquals(validateTextAlternatives(node), []);
+});
+
+Deno.test("validateTextAlternatives - passes role=img named by aria-labelledby", () => {
+  const node: SemanticNodeType = {
+    type: "div",
+    role: "img",
+    props: { "aria-labelledby": "chart-caption" },
+    children: [],
+  };
+
+  assertEquals(validateTextAlternatives(node), []);
+});
+
+Deno.test("validateTextAlternatives - still flags an unnamed role=img", () => {
+  const node: SemanticNodeType = {
+    type: "div",
+    role: "img",
+    props: {},
+    children: [],
+  };
+
+  const findings = validateTextAlternatives(node);
+
+  assertEquals(findings.length, 1);
+  assertEquals(findings[0].code, "LONE_TEXT_MISSING_ALT");
+});
+
+// The same principle applied to a real <img>: aria-label names it too, and the
+// accessible-name computation prefers it over alt. Matches axe's image-alt rule,
+// which accepts aria-label/aria-labelledby/title in alt's place.
+Deno.test("validateTextAlternatives - passes img named by aria-label", () => {
+  const node: SemanticNodeType = {
+    type: "img",
+    props: { "aria-label": "Quarterly revenue" },
+    children: [],
+  };
+
+  assertEquals(validateTextAlternatives(node), []);
+});
+
+// ...but an <img> with no name at all is untouched by this change, and an empty
+// alt still reports as the distinct "you said decorative, but you are not" case.
+Deno.test("validateTextAlternatives - unnamed img is still missing alt", () => {
+  const findings = validateTextAlternatives({
+    type: "img",
+    props: {},
+    children: [],
+  });
+
+  assertEquals(findings.length, 1);
+  assertEquals(findings[0].code, "LONE_TEXT_MISSING_ALT");
+});
+
+Deno.test("validateTextAlternatives - unnamed img with empty alt still reports empty-alt", () => {
+  const findings = validateTextAlternatives({
+    type: "img",
+    props: { alt: "" },
+    children: [],
+  });
+
+  assertEquals(findings.length, 1);
+  assertEquals(findings[0].code, "LONE_TEXT_EMPTY_ALT_MEANINGFUL");
+});
