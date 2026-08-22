@@ -23,6 +23,26 @@
     "@std/assert": "jsr:@std/assert@^1",
     "fast-check": "npm:fast-check@3"
   },
+  // Three files in this repo are written by the org Claude harness, not by lone:
+  // CLAUDE.md's managed block ("do not hand-edit this block"), .claude/, and
+  // .github/workflows/front-desk-add.yml (whose own header names itself a rolled
+  // copy of a canonical template, audited by audit-front-desk-add.sh). All three
+  // arrive without a trailing newline, and `deno fmt` here takes no path
+  // arguments — so it covers Markdown, JSON and YAML too and rejects them. That
+  // is why `deno task ci` has been red on main since 2026-08-08 (#35).
+  //
+  // Excluded rather than reformatted: formatting them would be the hand-edit two
+  // of them forbid, would fail the front-desk-add audit, and would be undone by
+  // the next harness re-roll — red again, same three files. They are not lone's
+  // source; the generator side is filed at bounded-systems/.github#247.
+  "fmt": {
+    "exclude": [
+      "CLAUDE.md",
+      ".claude/",
+      ".github/workflows/front-desk-add.yml"
+    ]
+  },
+
   "lint": {
     "rules": {
       // no-slow-types requires rewriting z.infer<> chains throughout the Zod schemas.
