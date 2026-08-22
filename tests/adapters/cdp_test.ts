@@ -189,3 +189,51 @@ Deno.test("cdpToSemanticNode - includes custom properties", () => {
     children: [],
   });
 });
+
+// ── A REAL tree, captured from Chrome (#37) ──────────────────────────────────
+// The hand-built fixtures above are all-visible and shallow, which is why every
+// one of them passed while the adapter returned a childless root from actual
+// `Accessibility.getFullAXTree` output. This fixture is the real thing: 22 nodes
+// from a page rendered in Chromium, ignored wrappers and all.
+import realTree from "../fixtures/cdp-real-tree.json" with { type: "json" };
+
+Deno.test("cdpToSemanticNode - traverses THROUGH ignored nodes, not past them", () => {
+  const root = cdpToSemanticNode(realTree as never)!;
+  let count = 0;
+  (function walk(n: { children: unknown[] }) {
+    count++;
+    for (const c of n.children) walk(c as { children: unknown[] });
+  })(root);
+  // The root's only child is an ignored generic wrapper; the whole document hangs
+  // below it. Pruning it yielded 1.
+  assertEquals(count > 15, true, `expected the document, got ${count} node(s)`);
+});
+
+Deno.test("cdpToSemanticNode - aliases CDP's level onto aria-level", () => {
+  const root = cdpToSemanticNode(realTree as never)!;
+  const levels: unknown[] = [];
+  (function walk(
+    n: { role?: string; props?: Record<string, unknown>; children: unknown[] },
+  ) {
+    if (n.role === "heading") levels.push(n.props?.["aria-level"]);
+    for (const c of n.children) walk(c as never);
+  })(root as never);
+  assertEquals(levels, [1, 4]);
+});
+
+Deno.test("cdpToSemanticNode - aliases a link's url onto href", () => {
+  const root = cdpToSemanticNode(realTree as never)!;
+  let seen = false;
+  (function walk(
+    n: { role?: string; props?: Record<string, unknown>; children: unknown[] },
+  ) {
+    if (n.role === "link") {
+      seen = true;
+      // Without this, validateButtonVsLink reports LINK_WITHOUT_HREF for every link
+      // in every accessibility tree, because a tree has no href attribute at all.
+      assertEquals(typeof n.props?.href, "string");
+    }
+    for (const c of n.children) walk(c as never);
+  })(root as never);
+  assertEquals(seen, true, "fixture should contain a link");
+});
