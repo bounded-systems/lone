@@ -108,7 +108,13 @@ export function validateTextAlternatives(
 }
 
 function isImageNode(node: SemanticNodeType): boolean {
-  return node.type === "img" || node.role === "img";
+  // "image" as well as "img": the ARIA role in a computed accessibility tree is
+  // `image`, so a CDP-sourced tree named neither of the other two and every missing
+  // alt went unreported. It also covers <svg> from that source — an unlabelled SVG
+  // maps to role `image` there, so the svg arm below (which keys on a tag name the
+  // tree cannot produce) is not the one that catches it.
+  return node.type === "img" || node.type === "image" ||
+    node.role === "img" || node.role === "image";
 }
 
 function isIconOnlyControl(

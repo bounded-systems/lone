@@ -177,6 +177,18 @@ export function cdpToSemanticNode(
   // Find root node (node without parentId or first node)
   const rootNode = nodes.find((node) => !node.parentId) || nodes[0];
 
+  // The visible descendants of an ignored node, hoisted to take its place.
+  function collapse(axNode: AXNodeType): SemanticNodeType[] {
+    const out: SemanticNodeType[] = [];
+    for (const childId of axNode.childIds ?? []) {
+      const child = nodeMap.get(childId);
+      if (!child) continue;
+      if (child.ignored) out.push(...collapse(child));
+      else out.push(convertNode(child));
+    }
+    return out;
+  }
+
   function convertNode(axNode: AXNodeType): SemanticNodeType {
     const role = axNode.role?.value ? String(axNode.role.value) : undefined;
     const name = axNode.name?.value ? String(axNode.name.value) : undefined;
@@ -187,9 +199,15 @@ export function cdpToSemanticNode(
     if (axNode.childIds) {
       for (const childId of axNode.childIds) {
         const childNode = nodeMap.get(childId);
-        if (childNode && !childNode.ignored) {
-          children.push(convertNode(childNode));
-        }
+        if (!childNode) continue;
+        // An IGNORED node is transparent, not absent: skip the node, keep its
+        // subtree. Real Accessibility.getFullAXTree output is full of ignored
+        // wrappers — the <html>/<body> shells and generic containers — and the
+        // document hangs BELOW them. Pruning one discarded everything under it,
+        // which in practice meant the entire page: a 22-node tree converted to a
+        // lone root with zero children.
+        if (childNode.ignored) children.push(...collapse(childNode));
+        else children.push(convertNode(childNode));
       }
     }
 
@@ -206,6 +224,24 @@ export function cdpToSemanticNode(
       for (const prop of axNode.properties) {
         props[prop.name] = prop.value.value;
       }
+    }
+    // CDP names three things differently from the props the validators read. The
+    // values are already here — this is a rename, not new data — and without it
+    // three checks are silently unreachable on an accessibility tree:
+    //
+    //   level → aria-level   validateHeadingHierarchy reads aria-level first, then
+    //                        falls back to parsing "h1".."h6" out of node.type. An
+    //                        AX tree has role "heading" and a numeric level, so the
+    //                        fallback can never match and HEADING_LEVEL_SKIP is dead.
+    //   url   → href         validateButtonVsLink flags a link with no href. An AX
+    //                        tree has no href at all, so LINK_WITHOUT_HREF fired on
+    //                        EVERY link on EVERY page — a false positive, and the
+    //                        loudest possible one.
+    if (props.level !== undefined && props["aria-level"] === undefined) {
+      props["aria-level"] = props.level;
+    }
+    if (props.url !== undefined && props.href === undefined) {
+      props.href = props.url;
     }
 
     return { type, name, role, props, children };
