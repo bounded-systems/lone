@@ -1,6 +1,6 @@
 {
   "name": "@bounded-systems/lone",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "license": "MIT",
   "exports": "./src/mod.ts",
   // Node metadata for the org knowledge graph (bounded-systems/.github-private
