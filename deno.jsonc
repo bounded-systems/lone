@@ -36,10 +36,28 @@
   // the next harness re-roll — red again, same three files. They are not lone's
   // source; the generator side is filed at bounded-systems/.github#247.
   "fmt": {
+    // Org-harness files, rolled in verbatim by bounded-systems/.github-private's
+    // reroll-*.sh scripts and NOT authored here. Each one self-declares
+    // "Identical bytes in every repo -- nothing per-repo to substitute, which is
+    // what makes the roll safe to re-run", and each arrives without a trailing
+    // newline, which `deno fmt` refuses.
+    //
+    // Reformatting them is not an option: it diverges those bytes from the
+    // template, and the next re-roll silently reverts it -- red again, same
+    // files. #36 set this precedent for front-desk-add.yml; pr-claim.yml (#42)
+    // and claim-sweep.yml (#43/#44) were adopted on 2026-08-29 without
+    // extending the list, which is why `deno task ci` has been failing at its
+    // first link ever since.
+    //
+    // The durable fix is upstream -- the rollers should emit a trailing newline
+    // -- and is tracked in bounded-systems/.github. Until then this list grows
+    // with each adopted caller.
     "exclude": [
       "CLAUDE.md",
       ".claude/",
-      ".github/workflows/front-desk-add.yml"
+      ".github/workflows/front-desk-add.yml",
+      ".github/workflows/claim-sweep.yml",
+      ".github/workflows/pr-claim.yml"
     ]
   },
 
