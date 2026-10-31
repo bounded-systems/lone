@@ -603,6 +603,28 @@ Deno.test("validateSemanticHTML - flags unlabeled form input", () => {
   );
 });
 
+Deno.test("validateSemanticHTML - hidden input needs no label", () => {
+  const node: SemanticNodeType = {
+    type: "form",
+    props: { method: "post", action: "act/a/0" },
+    children: [
+      {
+        type: "input",
+        props: { type: "hidden", name: "cap", value: "x" },
+        children: [],
+      },
+      { type: "button", role: "button", name: "Go", props: {}, children: [] },
+    ],
+  };
+
+  const findings = validateSemanticHTML(node);
+  const formFindings = findings.filter((f) =>
+    f.code === "LONE_SEMANTIC_FORM_CONTROL_UNLABELED"
+  );
+
+  assertEquals(formFindings.length, 0);
+});
+
 Deno.test("validateSemanticHTML - flags select without label", () => {
   const node: SemanticNodeType = {
     type: "select",
