@@ -328,7 +328,10 @@ function validateFormLabels(
 
   // Check form inputs for label association
   function walk(node: SemanticNodeType, currentPath: string) {
-    const isFormControl = node.type === "input" ||
+    // <input type="hidden"> has no UI and is never in the accessibility tree, so it needs no label
+    const isHiddenInput = node.type === "input" &&
+      String(node.props?.["type"] ?? "").toLowerCase() === "hidden";
+    const isFormControl = (node.type === "input" && !isHiddenInput) ||
       node.type === "select" ||
       node.type === "textarea" ||
       node.role === "textbox" ||
